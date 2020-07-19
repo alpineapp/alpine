@@ -3,6 +3,9 @@
 
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
+    {% if current_user.last_seen %}
+    <p>Last seen on: {{ moment(current_user.last_seen).fromNow() }}</p>
+    {% endif %}
     {% if form %}
     <h3> Quickly create a new card </h3>
     <form action="" method="post">
@@ -24,6 +27,7 @@
         <tr>
             <th>Definition</th>
             <th>Explanation</th>
+            <th>Created at</th>
         </tr>
         {% for card in cards %}
             {% include '_card.html' %}
