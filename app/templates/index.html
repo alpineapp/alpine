@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <h1>Hi, {{ current_user.username }}!</h1>
+    {% if form %}
+    <h3> Quickly create a new card </h3>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <div class="form-group">
+            <label for="frontLabel">{{ form.front.label }}</label>
+            <input class="form-control" rows=1 id="frontLabel" placeholder="Card Definition"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="backLabel">{{ form.back.label }}</label>
+            <textarea class="form-control" rows=4 id="backLabel" placeholder="Card Definition"></textarea>
+        </div>
+        <button type="submit" class="btn btn-default">Create card</button>
+    </form>
+    {% endif %}
+    <br>
+    <h3> Your cards </h3>
+    <table class="table table-hover">
+        <tr>
+            <th>Definition</th>
+            <th>Explanation</th>
+        </tr>
+        {% for card in cards %}
+            {% include '_card.html' %}
+        {% endfor %}
+    </table>
+    <nav aria-label="...">
+        <ul class="pager">
+            <li class="previous{% if not prev_url %} disabled{% endif %}">
+                <a href="{{ prev_url or '#' }}">
+                    <span aria-hidden="true">&larr;</span> Newer cards
+                </a>
+            </li>
+            <li class="next{% if not next_url %} disabled{% endif %}">
+                <a href="{{ next_url or '#' }}">
+                    Older cards <span aria-hidden="true">&rarr;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+{% endblock %}
