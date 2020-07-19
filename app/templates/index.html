@@ -12,13 +12,15 @@
         {{ form.hidden_tag() }}
         <div class="form-group">
             <label for="frontLabel">{{ form.front.label }}</label>
-            <input class="form-control" rows=1 id="frontLabel" placeholder="Card Definition"></textarea>
+            {{ form.front(rows=1, placeholder='Card Definition',
+                          class='form-control') }}
         </div>
         <div class="form-group">
             <label for="backLabel">{{ form.back.label }}</label>
-            <textarea class="form-control" rows=4 id="backLabel" placeholder="Card Definition"></textarea>
+            {{ form.back(rows=4, placeholder='Card Explanation',
+                          class='form-control') }}
         </div>
-        <button type="submit" class="btn btn-default">Create card</button>
+        <p>{{ form.submit(class='btn btn-default') }}</p>
     </form>
     {% endif %}
     <br>
