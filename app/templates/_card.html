@@ -1,11 +1,18 @@
-<tr>
-    <td width='300px'>
+<tr id="card-{{ card.id }}" card-id='{{ card.id }}'>
+    <td width='300px' style='vertical-align: middle;'>
         {{ card.front }}
     </td>
-    <td>
+    <td style='vertical-align: middle;'>
         {{ card.back }}
     </td>
-    <td width='100px'>
+    <td width='100px' style='vertical-align: middle;'>
         {{ moment(card.timestamp).fromNow() }}
+    </td>
+    <td width='400px'>
+        <a class="btn btn-default displayBtn"
+           role="button"
+           style='vertical-align: middle;'
+           href="javascript:displayBack(
+                    '#card-{{ card.id }}');">Display</a>
     </td>
 </tr>

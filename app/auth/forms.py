@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, ValidationError, Email, EqualTo, \
                                Length
 from app.models import User
 
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -28,13 +29,6 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user is not None:
             raise ValidationError('Please use a different email address.')
-
-class CardForm(FlaskForm):
-    front = TextAreaField('Definition', validators=[
-        DataRequired(), Length(min=1, max=140)])
-    back = TextAreaField('Explanation', validators=[
-        DataRequired(), Length(min=1, max=300)])
-    submit = SubmitField('Submit')
 
 class ResetPasswordRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
