@@ -48,5 +48,7 @@ if not app.debug:
     app.logger.setLevel(logging.INFO)
     app.logger.info('Alpine startup')
 
+from app.errors import bp as errors_bp
+app.register_blueprint(errors_bp)
 
-from app import routes, models, errors
+from app import routes, models
