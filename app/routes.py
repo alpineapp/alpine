@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import render_template, flash, redirect, url_for, \
-                  request
+                  request, jsonify
 from werkzeug.urls import url_parse
 from app import app, db
 from app.forms import LoginForm, RegistrationForm, CardForm, ResetPasswordRequestForm, \
@@ -115,3 +115,10 @@ def reset_password(token):
         flash('Your password has been reset.')
         return redirect(url_for('login'))
     return render_template('reset_password.html', form=form)
+
+@app.route('/displayBack', methods=['POST'])
+@login_required
+def displayBack():
+    card_id = request.form['card_id']
+    card = Card.query.get(int(card_id))
+    return jsonify({'text': card.back})

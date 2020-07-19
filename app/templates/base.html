@@ -1,6 +1,12 @@
 
 {% extends 'bootstrap/base.html' %}
 
+{% block styles %}
+{{super()}}
+<link rel="stylesheet"
+      href="{{url_for('.static', filename='general.css')}}">
+{% endblock %}
+
 {% block title %}
     {% if title %}{{ title }} - Alpine{% else %}Welcome to Alpine{% endif %}
 {% endblock %}
@@ -51,4 +57,18 @@
 {% block scripts %}
     {{ super() }}
     {{ moment.include_moment() }}
+
+    <script>
+        function displayBack(sourceElem) {
+            var displayElem = $(sourceElem).find(".displayBtn");
+            displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
+            $.post('/displayBack', {
+                card_id: $(sourceElem).attr('card-id')
+            }).done(function(response) {
+                displayElem.replaceWith(response['text']);
+            }).fail(function() {
+                displayElem.text("{{ 'Error: Could not contact server.' }}");
+            });
+        }
+    </script>
 {% endblock %}
