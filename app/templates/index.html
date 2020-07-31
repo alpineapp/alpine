@@ -10,6 +10,11 @@
     <h3> Quickly create a new card </h3>
     <form action="" method="post">
         {{ form.hidden_tag() }}
+        {% with error = wtf.form_errors(form) %}
+        {% if error %}
+            <div class="alert alert-danger" role="alert">{{ error }}</div>
+        {% endif %}
+        {% endwith %}
         <div class="form-group">
             <label for="frontLabel">{{ form.front.label }}</label>
             {{ form.front(rows=1, placeholder='Card Definition',
