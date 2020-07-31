@@ -21,3 +21,5 @@ class Config(object):
     ADMINS = ['prinskyen@gmail.com']
     # Pagination
     CARDS_PER_PAGE = 3
+    # Full-text search
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
