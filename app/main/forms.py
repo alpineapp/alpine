@@ -19,5 +19,5 @@ class CardForm(FlaskForm):
     front = TextAreaField('Definition', validators=[
         DataRequired(), Length(min=1, max=140)])
     back = TextAreaField('Explanation', validators=[
-        DataRequired(), Length(min=1, max=2)])
+        DataRequired(), Length(min=1, max=1000)])
     submit = SubmitField('Submit')
