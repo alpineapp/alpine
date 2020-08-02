@@ -23,3 +23,5 @@ class Config(object):
     CARDS_PER_PAGE = 3
     # Full-text search
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+    # Logging
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
