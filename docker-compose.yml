@@ -5,24 +5,19 @@ networks:
     driver: bridge
 
 volumes:
-    v-alpine-mysql:
+    v-alpine-db:
     v-alpine-es:
 
 services:
   # ----------------------------------------------
-  # MySQL
-  mysql:
-    container_name: mysql
-    image: mysql/mysql-server:8.0.21
+  # Database
+  db:
+    container_name: db
+    image: postgres:9.6
     env_file:
       - .env
-      - .sec_env
-    environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
-      MYSQL_DATABASE: alpine
     volumes:
-      # - mysql-data:/var/lib/mysql
-      - v-alpine-mysql:/var/lib/mysql
+      - v-alpine-db:/var/lib/postgresql/data
     networks:
       - alpine-net
 
@@ -74,18 +69,15 @@ services:
   alpine:
     container_name: alpine
     image: alpine:latest
+    build: .
     ports:
       - 8000:5000
     env_file:
       - .env
-      - .sec_env
     depends_on:
-      - mysql
+      - db
       - elasticsearch
     environment:
-      MAIL_SERVER: smtp.googlemail.com
-      MAIL_PORT: 587
-      MAIL_USE_TLS: "true"
       ELASTICSEARCH_URL: http://elasticsearch:9200
     networks:
       - alpine-net

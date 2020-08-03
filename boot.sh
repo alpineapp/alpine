@@ -1,8 +1,6 @@
 #!/bin/sh
 source alpine/bin/activate
 
-export DATABASE_URL=mysql+pymysql://$(MYSQL_USERNAME):$(MYSQL_PASSWORD)@mysql/alpine
-
 while true; do
     flask db upgrade
     if [[ "$?" == "0" ]]; then
