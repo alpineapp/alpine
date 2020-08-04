@@ -21,7 +21,7 @@ def upgrade():
     op.create_table('card',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('front', sa.String(length=64), nullable=True),
-    sa.Column('back', sa.String(length=140), nullable=True),
+    sa.Column('back', sa.String(length=1000), nullable=True),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
