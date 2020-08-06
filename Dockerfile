@@ -3,7 +3,7 @@ FROM python:3.8-alpine
 #     libressl-dev musl-dev libffi-dev
 
 RUN apk add --no-cache --update python3-dev gcc build-base \
-    musl-dev postgresql-dev
+    musl-dev postgresql-dev libffi-dev
 
 RUN adduser -D alpine
 
