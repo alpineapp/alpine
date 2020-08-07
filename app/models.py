@@ -23,7 +23,7 @@ class SearchableMixin(object):
         for i in range(len(ids)):
             when.append((ids[i], i))
         return cls.query.filter(cls.id.in_(ids)) \
-                        .filter(cls.user_id.is_(current_user.id)) \
+                        .filter(cls.user_id == current_user.id) \
                         .order_by(db.case(when, value=cls.id)), total
 
     @classmethod
