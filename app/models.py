@@ -99,7 +99,7 @@ class User(UserMixin, db.Model):
 class Card(SearchableMixin, db.Model):
     __searchable__ = ['front', 'back']
     id = db.Column(db.Integer, primary_key=True)
-    front = db.Column(db.String(64))
+    front = db.Column(db.String(500))
     back = db.Column(db.String(1000))
     timestamp = db.Column(db.DateTime, index=True,
                           default=datetime.utcnow)
