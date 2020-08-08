@@ -31,7 +31,7 @@ services:
       - cluster.routing.allocation.disk.threshold_enabled=false
       - discovery.type=single-node
       - bootstrap.memory_lock=true
-      - "ES_JAVA_OPTS=-XX:UseAVX=2 -Xms512M -Xmx512M"
+      - "ES_JAVA_OPTS=-XX:UseAVX=2 -Xms128M -Xmx128M"
     ulimits:
       memlock:
         soft: -1
