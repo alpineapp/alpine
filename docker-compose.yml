@@ -1,0 +1,85 @@
+version: "3.6"
+
+networks:
+  alpine-net:
+    driver: bridge
+
+volumes:
+    v-alpine-db:
+    v-alpine-es:
+
+services:
+  # ----------------------------------------------
+  # Database
+  db:
+    container_name: db
+    image: postgres:9.6
+    env_file:
+      - .env
+    volumes:
+      - v-alpine-db:/var/lib/postgresql/data
+    networks:
+      - alpine-net
+
+  # ----------------------------------------------
+  # Elasticsearch Stack
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+    environment:
+      - cluster.name=es-cluster
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-XX:UseAVX=2 -Xms128M -Xmx128M"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      # - elasticsearch-data:/usr/share/elasticsearch/data
+      - v-alpine-es:/usr/share/elasticsearch/data
+    networks:
+      - alpine-net
+    healthcheck:
+      interval: 20s
+      retries: 10
+      test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+
+  # Kibana
+  kibana:
+    container_name: kibana
+    image: docker.elastic.co/kibana/kibana:7.8.0
+    ports:
+      - 5601:5601
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    networks:
+      - alpine-net
+    healthcheck:
+      interval: 10s
+      retries: 20
+      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5602/api/status
+
+# ----------------------------------------------
+# Alpine App
+  alpine:
+    container_name: alpine
+    image: alpine:latest
+    build: .
+    ports:
+      - 8000:5000
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+    networks:
+      - alpine-net
+    restart: always

@@ -1,5 +1,8 @@
 import os
+from dotenv import load_dotenv
+
 basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 
 class Config(object):
@@ -18,3 +21,7 @@ class Config(object):
     ADMINS = ['prinskyen@gmail.com']
     # Pagination
     CARDS_PER_PAGE = 3
+    # Full-text search
+    ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
+    # Logging
+    LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
