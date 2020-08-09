@@ -68,6 +68,5 @@ def search():
 @login_required
 def card_popup(card_id):
     card = Card.query.get_or_404(int(card_id))
-    user = User.query.get(card.user_id)
     form = EmptyForm()
-    return render_template('card_popup.html', card=card, user=user, form=form)
+    return render_template('card_popup.html', card=card, user=card.user, form=form)
