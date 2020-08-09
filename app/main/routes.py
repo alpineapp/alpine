@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user, \
 
 from app import db
 from app.main import bp
-from app.main.forms import CardForm, SearchForm
+from app.main.forms import CardForm, SearchForm, EmptyForm
 from app.models import User, Card
 
 
@@ -63,3 +63,11 @@ def search():
         if page > 1 else None
     return render_template('search.html', title='Search card', cards=cards,
                            next_url=next_url, prev_url=prev_url)
+
+@bp.route('/card/<card_id>/popup')
+@login_required
+def card_popup(card_id):
+    card = Card.query.get_or_404(int(card_id))
+    user = User.query.get(card.user_id)
+    form = EmptyForm()
+    return render_template('card_popup.html', card=card, user=user, form=form)

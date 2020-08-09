@@ -21,3 +21,7 @@ class CardForm(FlaskForm):
     back = TextAreaField('Explanation', validators=[
         DataRequired(), Length(min=1, max=1000)])
     submit = SubmitField('Submit')
+
+
+class EmptyForm(FlaskForm):
+    submit = SubmitField('Submit')

@@ -1,0 +1,12 @@
+{{ moment.include_moment() }}
+
+<table class="table">
+    <tr>
+        <td style="border: 0px;">
+            <small>
+                <p>Created by user {{ user.username }} on
+                   {{ moment(card.timestamp).format('dddd, MMMM Do YYYY \\at HH:MM a') }}</p>
+            </small>
+        </td>   
+    </tr>
+</table>
