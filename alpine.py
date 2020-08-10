@@ -1,5 +1,5 @@
 from app import create_app, db
-from app.models import User, Card
+from app.models import User, Card, Notification, Task
 from flask_login import login_user, current_user
 
 app = create_app()
@@ -10,5 +10,5 @@ def make_shell_context():
     request_ctx = app.test_request_context()
     request_ctx.push()
     login_user(user)
-    return {'db': db, 'User': User, 'Card': Card,
-            'current_user': user}
+    return {'db': db, 'User': User, 'Card': Card, 'Notification': Notification,
+            'Task': Task, 'current_user': user}

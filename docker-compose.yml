@@ -47,22 +47,49 @@ services:
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
 
   # Kibana
-  kibana:
-    container_name: kibana
-    image: docker.elastic.co/kibana/kibana:7.8.0
-    ports:
-      - 5601:5601
-    depends_on:
-      - elasticsearch
-    environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  # kibana:
+  #   container_name: kibana
+  #   image: docker.elastic.co/kibana/kibana:7.8.0
+  #   ports:
+  #     - 5601:5601
+  #   depends_on:
+  #     - elasticsearch
+  #   environment:
+  #     ELASTICSEARCH_URL: http://elasticsearch:9200
+  #     ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  #   networks:
+  #     - alpine-net
+  #   healthcheck:
+  #     interval: 10s
+  #     retries: 20
+  #     test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5602/api/status
+
+  # ----------------------------------------------
+  # Background worker
+  redis:
+    container_name: redis
+    image: redis:6.0.6-alpine
     networks:
       - alpine-net
-    healthcheck:
-      interval: 10s
-      retries: 20
-      test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5602/api/status
+
+  worker:
+    container_name: worker
+    image: alpine:latest
+    command: >
+      sh -c "
+      ./boot.sh 
+      && ./work.sh"
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+    networks:
+      - alpine-net
+    restart: always
 
 # ----------------------------------------------
 # Alpine App
@@ -70,16 +97,23 @@ services:
     container_name: alpine
     image: alpine:latest
     build: .
+    command: >
+      sh -c "
+      ./boot.sh 
+      && ./run.sh"
     ports:
       - 8000:5000
-    env_file:
-      - .env
     depends_on:
       - db
       - elasticsearch
+      - worker
+      - redis
+    env_file:
+      - .env
     environment:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
     networks:
       - alpine-net
     restart: always

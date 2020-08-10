@@ -25,3 +25,5 @@ class Config(object):
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     # Logging
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
+    # Redis
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'

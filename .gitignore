@@ -5,6 +5,9 @@ alpine/*
 # C extensions
 *.so
 
+# VSCode
+.vscode/*
+
 # Packages
 *.egg
 *.egg-info

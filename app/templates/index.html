@@ -55,4 +55,11 @@
             </li>
         </ul>
     </nav>
+    {% if not current_user.get_task_in_progress('export_cards') %}
+    <p>
+        <a href="{{ url_for('main.export_cards') }}">
+            {{ 'Export your cards' }}
+        </a>
+    </p>
+    {% endif %}
 {% endblock %}

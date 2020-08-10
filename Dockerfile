@@ -16,8 +16,8 @@ RUN alpine/bin/pip install gunicorn psycopg2
 
 COPY app app
 COPY migrations migrations
-COPY alpine.py config.py boot.sh ./
-RUN chmod +x boot.sh
+COPY alpine.py config.py boot.sh work.sh run.sh ./
+RUN chmod +x boot.sh work.sh run.sh
 
 ENV FLASK_APP alpine.py
 
@@ -25,4 +25,5 @@ RUN chown -R alpine:alpine ./
 USER alpine
 
 EXPOSE 5000
-ENTRYPOINT ["./boot.sh"]
+# Run boot.sh in docker-compose command to let worker use the image
+# ENTRYPOINT ["./boot.sh"]

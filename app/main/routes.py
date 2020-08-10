@@ -8,7 +8,7 @@ from flask_login import current_user, login_user, logout_user, \
 from app import db
 from app.main import bp
 from app.main.forms import CardForm, SearchForm, EmptyForm
-from app.models import User, Card
+from app.models import User, Card, Notification
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -70,3 +70,25 @@ def card_popup(card_id):
     card = Card.query.get_or_404(int(card_id))
     form = EmptyForm()
     return render_template('card_popup.html', card=card, user=card.user, form=form)
+
+@bp.route('/notifications')
+@login_required
+def notifications():
+    since = request.args.get('since', 0.0, type=float)
+    notifications = current_user.notifications.filter(
+        Notification.timestamp > since).order_by(Notification.timestamp.asc())
+    return jsonify([{
+            'name': n.name,
+            'data': n.get_data(),
+            'timestamp': n.timestamp
+        } for n in notifications])
+
+@bp.route('/export_cards')
+@login_required
+def export_cards():
+    if current_user.get_task_in_progress('export_cards'):
+        flash('An export task is currently in progress')
+    else:
+        current_user.launch_task('export_cards', 'Exporting cards...')
+        db.session.commit()
+    return redirect(url_for('main.index'))
