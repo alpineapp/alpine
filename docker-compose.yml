@@ -81,6 +81,7 @@ services:
       && ./work.sh"
     depends_on:
       - redis
+      - alpine
     env_file:
       - .env
     environment:
@@ -106,7 +107,6 @@ services:
     depends_on:
       - db
       - elasticsearch
-      - worker
       - redis
     env_file:
       - .env
