@@ -5,6 +5,9 @@ alpine/*
 # C extensions
 *.so
 
+# MacOS
+*DS_Store
+
 # VSCode
 .vscode/*
 
