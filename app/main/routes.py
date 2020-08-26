@@ -8,7 +8,7 @@ from flask_login import current_user, login_user, logout_user, \
 from app import db
 from app.main import bp
 from app.main.forms import CardForm, SearchForm, EmptyForm
-from app.models import User, Card, Notification
+from app.models import User, Card, Notification, Deck
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -17,8 +17,14 @@ from app.models import User, Card, Notification
 def index():
     form = CardForm()
     if form.validate_on_submit():
+        deck_name = form.deck.data or "Unnamed"
+        deck = current_user.decks.filter_by(name=deck_name).first()
+        if not deck:
+            deck = Deck(name=deck_name, user_id=current_user.id)
+            db.session.add(deck)
+            db.session.flush()
         card = Card(front=form.front.data, back=form.back.data,
-                    user_id=current_user.id)
+                    user_id=current_user.id, deck_id=deck.id)
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')

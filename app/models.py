@@ -93,6 +93,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
+    decks = db.relationship('Deck', backref='user', lazy='dynamic')
     cards = db.relationship('Card', backref='user', lazy='dynamic')
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     notifications = db.relationship('Notification', backref='user',
@@ -155,6 +156,7 @@ class User(UserMixin, db.Model):
             'username': self.username,
             'last_seen': self.last_seen.isoformat() + 'Z',
             'card_count': self.cards.count(),
+            'deck_count': self.decks.count(),
             '_links': {
                 'self': url_for('api.get_user', id=self.id)
             }
@@ -191,6 +193,38 @@ class User(UserMixin, db.Model):
         return user
 
 
+class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
+    __searchable__ = ['name']
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    timestamp = db.Column(db.DateTime, index=True,
+                          default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    cards = db.relationship('Card', backref='deck', lazy='dynamic')
+
+    def __repr__(self):
+        return '<Deck {}>'.format(self.name)
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "name": self.name,
+            "timestamp": self.timestamp.isoformat() + "Z",
+            "user_id": self.user_id,
+            "_links": {
+                "self": url_for("api.get_deck", id=self.id)
+            }
+        }
+        return data
+
+    def from_dict(self, data):
+        client_set_fields = ['name', 'user_id']
+        for field in client_set_fields:
+            if field in data:
+                setattr(self, field, data[field])
+        setattr(self, 'timestamp', datetime.utcnow())
+
+
 class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ['front', 'back']
     id = db.Column(db.Integer, primary_key=True)
@@ -199,15 +233,22 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     timestamp = db.Column(db.DateTime, index=True,
                           default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    deck_id = db.Column(db.Integer, db.ForeignKey('deck.id'))
+
+    def get_deck_name(self):
+        if self.deck_id:
+            deck_name = Deck.query.get(self.deck_id).name
+            return deck_name
 
     def __repr__(self):
-        return '<Card {}>'.format(self.front)
+        return f'<Deck {self.get_deck_name()} - Card {self.front}>'
 
     def to_dict(self):
         data = {
             "id": self.id,
             "front": self.front,
             "back": self.back,
+            "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
             "_links": {
@@ -217,7 +258,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         return data
 
     def from_dict(self, data):
-        client_set_fields = ['front', 'back', 'user_id']
+        client_set_fields = ['front', 'back', 'user_id', 'deck_id']
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])

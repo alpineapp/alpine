@@ -1,10 +1,15 @@
 <tr id="card-{{ card.id }}" card-id='{{ card.id }}'>
     <td width='300px' style='vertical-align: middle;'>
+        {% if card.deck %}
+        {{ card.get_deck_name() }}
+        {% endif %}
+    </td>
+    <td width='300px' style='vertical-align: middle;'>
         <span class="card_popup"'>
             <p>{{ card.front }}</p>
         </span>
     </td>
-    <td style='vertical-align: middle;'>
+    <td width='600px' style='vertical-align: middle;'>
         {{ card.back }}
     </td>
     <td width='100px' style='vertical-align: middle;'>

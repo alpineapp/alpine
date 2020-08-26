@@ -20,6 +20,8 @@ class CardForm(FlaskForm):
         DataRequired(), Length(min=1, max=500)])
     back = TextAreaField('Explanation', validators=[
         DataRequired(), Length(min=1, max=1000)])
+    deck = StringField('Deck', validators=[DataRequired(),
+                                           Length(min=1, max=256)])
     submit = SubmitField('Submit')
 
 
