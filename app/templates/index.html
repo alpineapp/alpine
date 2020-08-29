@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
@@ -8,29 +7,7 @@
     {% endif %}
     {% if form %}
     <h3> Quickly create a new card </h3>
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        {% with error = wtf.form_errors(form) %}
-        {% if error %}
-            <div class="alert alert-danger" role="alert">{{ error }}</div>
-        {% endif %}
-        {% endwith %}
-        <div class="form-group">
-            <label for="frontLabel">{{ form.front.label }}</label>
-            {{ form.front(rows=1, placeholder='Card Definition',
-                          class='form-control') }}
-        </div>
-        <div class="form-group">
-            <label for="backLabel">{{ form.back.label }}</label>
-            {{ form.back(rows=4, placeholder='Card Explanation',
-                          class='form-control') }}
-        </div>
-        <div class="form-group">
-            <label for="deckLabel">{{ form.deck.label }}</label>
-            {{ form.deck(class='form-control') }}
-        </div>
-        <p>{{ form.submit(class='btn btn-default') }}</p>
-    </form>
+    {% include "_edit_card.html" %}
     {% endif %}
     <br>
     <h3> Your cards </h3>
@@ -39,7 +16,7 @@
             <th>Deck</th>
             <th>Definition</th>
             <th>Explanation</th>
-            <th>Created at</th>
+            <th>Updated at</th>
             <th></th>
         </tr>
         {% for card in cards %}

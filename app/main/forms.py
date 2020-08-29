@@ -27,3 +27,7 @@ class CardForm(FlaskForm):
 
 class EmptyForm(FlaskForm):
     submit = SubmitField('Submit')
+
+
+class DeleteCardForm(FlaskForm):
+    submit = SubmitField('Delete')

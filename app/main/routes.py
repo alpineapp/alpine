@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user, \
 
 from app import db
 from app.main import bp
-from app.main.forms import CardForm, SearchForm, EmptyForm
+from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm
 from app.models import User, Card, Notification, Deck
 
 
@@ -98,3 +98,44 @@ def export_cards():
         current_user.launch_task('export_cards', 'Exporting cards...')
         db.session.commit()
     return redirect(url_for('main.index'))
+
+@bp.route('/card/<card_id>', methods=['GET', 'POST'])
+@login_required
+def card_profile(card_id):
+    card = Card.query.get_or_404(card_id)
+    if current_user.id != card.user_id:
+        return redirect(url_for('main.index'))
+    form = DeleteCardForm()
+    if request.method == 'POST':
+        db.session.delete(card)
+        db.session.commit()
+        return redirect(url_for('main.index'))
+    return render_template('card_profile.html', card=card, form=form)
+
+@bp.route('/card/<card_id>/edit_card', methods=['GET', 'POST'])
+@login_required
+def edit_card(card_id):
+    card = Card.query.get_or_404(card_id)
+    if current_user.id != card.user_id:
+        return redirect(url_for('main.index'))
+    form = CardForm()
+    if form.validate_on_submit():
+        deck_name = form.deck.data or "Unnamed"
+        deck = current_user.decks.filter_by(name=deck_name).first()
+        if not deck:
+            deck = Deck(name=deck_name, user_id=current_user.id)
+            db.session.add(deck)
+            db.session.flush()
+        card.front = form.front.data
+        card.back = form.back.data
+        card.deck_id = deck.id
+        card.timestamp = datetime.utcnow()
+        db.session.add(card)
+        db.session.commit()
+        flash('Your card is edited!')
+        return redirect(url_for('main.card_profile', card_id=card.id))
+    elif request.method == "GET":
+        form.front.data = card.front
+        form.back.data = card.back
+        form.deck.data = card.deck.name
+    return render_template("edit_card.html", form=form)

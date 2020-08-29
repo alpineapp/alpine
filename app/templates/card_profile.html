@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+{{ moment.include_moment() }}
+
+{% block app_content %}
+    <h1>Card: {{ card.front}} </h1>
+    <h4>Deck: {{ card.get_deck_name() }}</h4>
+    <h4>Back: {{ card.back}}</h4>
+    <p>Updated on: {{ moment(card.timestamp).format('dddd, MMMM Do YYYY \\at HH:MM a') }}</p>
+    <p>
+        <a class='btn btn-default' style="width:140px" href="{{ url_for('main.edit_card', card_id=card.id) }}">Edit your card</a>
+        <a class='btn btn-danger' style="width:140px" data-toggle='modal'
+        data-target='#deleteModal'>Delete your card</a>
+    </p>
+    <!-- Modal -->
+    <div id="deleteModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">    
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Confirm Delete</h4>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure to delete this card?</p>
+                </div>
+                <div class="modal-footer">
+                    <form class='form-inline' action="" method="post">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                        <div class="form-group">
+                            {{ form.submit(rows=1, class='btn btn-danger') }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

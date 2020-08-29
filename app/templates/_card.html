@@ -6,7 +6,7 @@
     </td>
     <td width='300px' style='vertical-align: middle;'>
         <span class="card_popup"'>
-            <p>{{ card.front }}</p>
+            <p><a href="{{ url_for('main.card_profile', card_id=card.id) }}">{{ card.front }}</a></p>
         </span>
     </td>
     <td width='600px' style='vertical-align: middle;'>
