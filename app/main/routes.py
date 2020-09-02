@@ -23,8 +23,13 @@ def index():
             deck = Deck(name=deck_name, user_id=current_user.id)
             db.session.add(deck)
             db.session.flush()
+        next_date = Card.get_next_date(form.start_date, form.bucket)
         card = Card(front=form.front.data, back=form.back.data,
-                    user_id=current_user.id, deck_id=deck.id)
+                    user_id=current_user.id, deck_id=deck.id,
+                    start_date=form.start_date, bucket=form.bucket,
+                    example=form.example,
+                    use_case=form.use_case, reverse_asking=form.reverse_asking)
+        card.set_next_date()
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
