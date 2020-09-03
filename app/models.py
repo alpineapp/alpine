@@ -289,7 +289,9 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     @staticmethod
     def _get_day_from_bucket(bucket):
-        if bucket <= 3:
+        if bucket <= 1:
+            return 0
+        elif bucket <= 3:
             return 1
         elif bucket <= 5:
             return 2

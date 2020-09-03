@@ -27,17 +27,12 @@
     </div>
     <div class="form-group">
         <label for="bucketLabel">{{ form.bucket.label }}</label>
-        {{ form.bucket(rows=1, cols=1, placeholder=1, class='form-control') }}
+        {{ form.bucket(rows=1, placeholder=1, class='form-control') }}
     </div>
     <div class="form-group">
         <label for="exampleLabel">{{ form.example.label }}</label>
         {{ form.example(rows=4, placeholder='She bent her head to study the plans!',
                         class='form-control') }}
-    </div>
-    <div class="form-group">
-        <label for="sourceLabel">{{ form.source.label }}</label>
-        {{ form.source(rows=1, placeholder='https://www.google.com',
-                       class='form-control') }}
     </div>
     <div class="form-group">
         <label for="sourceLabel">{{ form.source.label }}</label>

@@ -26,14 +26,16 @@ def index():
         next_date = Card.get_next_date(form.start_date, form.bucket)
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
-                    start_date=form.start_date, bucket=form.bucket,
-                    example=form.example,
-                    use_case=form.use_case, reverse_asking=form.reverse_asking)
+                    start_date=form.start_date.data, bucket=form.bucket.data,
+                    example=form.example.data,
+                    use_case=form.use_case.data, reverse_asking=form.reverse_asking.data)
         card.set_next_date()
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
         return redirect(url_for('main.index'))
+    elif request.method == 'GET':
+        form.start_date.data = datetime.today()
     page = request.args.get('page', 1, type=int)
     cards = current_user.cards.order_by(Card.timestamp.desc()) \
                               .paginate(page, current_app.config['CARDS_PER_PAGE'],
@@ -135,6 +137,13 @@ def edit_card(card_id):
         card.back = form.back.data
         card.deck_id = deck.id
         card.timestamp = datetime.utcnow()
+        card.start_date = form.start_date.data
+        card.bucket = form.bucket.data
+        card.example = form.example.data
+        card.use_case = form.use_case.data
+        card.source = form.source.data
+        card.reverse_asking = form.reverse_asking.data
+        card.set_next_date()
         db.session.add(card)
         db.session.commit()
         flash('Your card is edited!')
@@ -143,4 +152,10 @@ def edit_card(card_id):
         form.front.data = card.front
         form.back.data = card.back
         form.deck.data = card.deck.name
+        form.start_date.data = card.start_date
+        form.bucket.data = card.bucket
+        form.example.data = card.example
+        form.use_case.data = card.use_case
+        form.source.data = card.source
+        form.reverse_asking.data = card.reverse_asking
     return render_template("edit_card.html", form=form)
