@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+{% if cursor == 0 %}
+<h1>You have no card to learn today!</h1>
+{% else %}
+<h1>Congratulations! You have learned {{ cursor }} cards today!</h1>
+{% endif %}
+{% endblock %}

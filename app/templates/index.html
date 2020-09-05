@@ -2,9 +2,7 @@
 
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
-    {% if current_user.last_seen %}
-    <p>Last seen on: {{ moment(current_user.last_seen).fromNow() }}</p>
-    {% endif %}
+    <a class='btn btn-success' href="{{ url_for('main.start_learning') }}">Start learning</a>
     {% if form %}
     <h3> Quickly create a new card </h3>
     {% include "_edit_card.html" %}

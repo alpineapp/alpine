@@ -1,14 +1,16 @@
 from datetime import datetime
 from flask import render_template, flash, redirect, url_for, \
-                  request, jsonify, current_app, g
+                  request, jsonify, current_app, g, session
 from werkzeug.urls import url_parse
 from flask_login import current_user, login_user, logout_user, \
                         login_required
 
 from app import db
 from app.main import bp
-from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm
+from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm, \
+                           StartLearningForm, ClearLearningForm, LearningForm
 from app.models import User, Card, Notification, Deck
+from app.learning import LearningHelper
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -23,7 +25,6 @@ def index():
             deck = Deck(name=deck_name, user_id=current_user.id)
             db.session.add(deck)
             db.session.flush()
-        next_date = Card.get_next_date(form.start_date, form.bucket)
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
                     start_date=form.start_date.data, bucket=form.bucket.data,
@@ -55,9 +56,9 @@ def before_request():
         db.session.commit()
         g.search_form = SearchForm()
 
-@bp.route('/displayBack', methods=['POST'])
+@bp.route('/display_back', methods=['POST'])
 @login_required
-def displayBack():
+def display_back():
     card_id = request.form['card_id']
     card = Card.query.get(int(card_id))
     return jsonify({'text': card.back})
@@ -159,3 +160,56 @@ def edit_card(card_id):
         form.source.data = card.source
         form.reverse_asking.data = card.reverse_asking
     return render_template("edit_card.html", form=form)
+
+@bp.route('/start_learning', methods=['GET', 'POST'])
+@login_required
+def start_learning():
+    start_form = StartLearningForm()
+    clear_form = ClearLearningForm()
+    if start_form.validate_on_submit() and request.form['mode'] == 'start':
+        return redirect(url_for('main.learning',
+                                num_random_learned=start_form.num_random_learned.data, 
+                                learn_date=start_form.learn_date.data))
+    elif clear_form.validate_on_submit() and request.form['mode'] == 'clear':
+        session['lh'] = None
+    start_form.learn_date.data = datetime.today()
+    return render_template("start_learning.html", start_form=start_form,
+                           clear_form=clear_form)
+
+@bp.route('/learning?num_random_learned=<num_random_learned>&learn_date=<learn_date>', methods=['GET', 'POST'])
+@login_required
+def learning(num_random_learned, learn_date):
+    date_fmt = "%Y-%m-%d"
+    if isinstance(learn_date, str):
+        learn_date = datetime.strptime(learn_date, date_fmt)
+    lh = LearningHelper(num_random_learned, learn_date)
+    if session.get('lh'):
+        lh_dict = session['lh']
+        lh.deserialize(lh_dict)
+    else:
+        current_app.logger.info(f'Create new LearingHelper')
+        lh.collect_tasks_missed()
+        lh.collect_tasks_today()
+        lh.collect_random_learned()
+        lh.start()
+        session['lh'] = lh.serialize()
+    card = lh.get_current_card()
+    if card is None:
+        session['lh'] = None
+        return render_template('end_learning.html', cursor=lh.cursor)
+    form = LearningForm()
+    if form.validate_on_submit():
+        if request.form['button'] == 'next':
+            card.handle_not_ok()
+        elif request.form['button'] == 'ok':
+            card.handle_ok()
+        lh.cursor += 1
+        session['lh'] = lh.serialize()
+        db.session.add(card)
+        db.session.commit()
+        card = lh.get_current_card()
+        if card is None:
+            session['lh'] = None
+            return render_template('end_learning.html', cursor=lh.cursor)
+    return render_template('learning.html', form=form, card=card,
+                           size=len(lh.cards), cursor=lh.cursor)

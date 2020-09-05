@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<form action="" method="post">
+    {{ start_form.hidden_tag() }}
+    <input type="hidden" name="mode" value="start">
+    <div class="form-group">
+        <label for="numRandomLearnedLabel">{{ start_form.num_random_learned.label }}</label>
+        {{ start_form.num_random_learned(rows=1, placeholder='study',
+                                         class='form-control, col-1') }}
+    </div>
+    <div class="form-group">
+        <label for="learnDateLabel">{{ start_form.learn_date.label }}</label>
+        {{ start_form.learn_date(rows=1, placeholder='study',
+                                         class='form-control, col-1') }}
+    </div>
+    <p>{{ start_form.submit(class='btn btn-success') }}</p>
+</form>
+<form action="" method="post">
+    {{ clear_form.hidden_tag() }}
+    <input type="hidden" name="mode" value="clear">
+    <p>{{ clear_form.submit(class='btn btn-default') }}</p>
+</form>
+{% endblock %}

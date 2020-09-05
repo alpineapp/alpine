@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+{% if card is not none %}
+<div class='container' id="card-{{ card.id }}" card-id='{{ card.id }}'>
+    <div class="row">
+        <div class="col-lg-offset-2 col-md-1">
+            <h4>{{ cursor + 1 }} / {{ size }}</h4>
+        </div>
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-heading" style="height:80px">{{ card.front }}</div>
+                <div class="panel-body displayTarget" id='displayTarget' style="height:300px"></div>
+            </div>
+        </div>
+        <div class="col-md-1">
+            <a class="btn btn-default" id="displayBtn" card_id="{{ card.id }}">Display</a>
+        </div>
+    </div>
+    <div class='row-sm-1'>
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+            <div class="col-sm-1 col-sm-offset-4"></div>
+            <div class="col-sm-1" id='notOK'>
+                <p class='btn btn-danger' style='width: 80px'>Not OK</p>
+            </div>
+            <div class="col-sm-1" id="next" style="display:none">
+                <form action="" method="post">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="button" value="next">
+                    <p>{{ form.next(class='btn btn-info', style="width: 80px") }}</p>
+                </form>
+            </div>
+            <div class="col-sm-1" id="ok">
+                <form action="" method="post">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" name="button" value="ok">
+                    <p>{{ form.ok(class='btn btn-success', style="width: 80px") }}</p>
+                </form>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -248,11 +248,23 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             return deck_name
 
     def set_next_date(self):
+        if self.bucket >= 6:
+            self.next_date = None
+            return
         plus_next_day = self._get_day_from_bucket(self.bucket)
-        if plus_next_day:
+        if plus_next_day is not None:
             self.next_date = self.start_date + timedelta(days=plus_next_day)
         else:
             self.next_date = None
+
+    def handle_not_ok(self):
+        self.bucket = max(1, self.bucket - 1)
+        self.start_date = datetime.utcnow().date()
+        self.set_next_date()
+
+    def handle_ok(self):
+        self.bucket = min(6, self.bucket + 1)
+        self.set_next_date()
 
     def __repr__(self):
         return f'<Deck {self.get_deck_name()} - Card {self.front}>'

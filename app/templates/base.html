@@ -82,18 +82,6 @@
     {{ moment.include_moment() }}
 
     <script>
-        function displayBack(sourceElem) {
-            var displayElem = $(sourceElem).find(".displayBtn");
-            displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
-            $.post('/displayBack', {
-                card_id: $(sourceElem).attr('card-id')
-            }).done(function(response) {
-                displayElem.replaceWith(response['text']);
-            }).fail(function() {
-                displayElem.text("{{ 'Error: Could not contact server.' }}");
-            });
-        }
-
         $(function() {
             var timer = null;
             $('.card_popup').hover(
@@ -168,5 +156,31 @@
         function set_task_progress(task_id, progress) {
             $('#' + task_id + '-progress').text(progress);
         }
+
+        // For learning session JS utilities
+        $("#notOK").click(function() {
+            displayBack($("#displayBtn"));
+            $("#notOK").hide();
+            $("#next").show();
+            $("#ok").hide();
+        })
+
+        function displayBack(sourceElem) {
+            var card_id = sourceElem.attr("card_id");
+            var displayElem = $("#displayTarget");
+            displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
+            $.post('/display_back', {
+                card_id: card_id
+            }).done(function(response) {
+                displayElem.text(response['text']);
+                sourceElem.hide();
+            }).fail(function() {
+                displayElem.text("{{ 'Error: Could not contact server.' }}");
+            });
+        }
+
+        $("#displayBtn").click(function() {
+            displayBack($(this));
+        })
     </script>
 {% endblock %}

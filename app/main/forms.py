@@ -43,3 +43,20 @@ class EmptyForm(FlaskForm):
 
 class DeleteCardForm(FlaskForm):
     submit = SubmitField('Delete')
+
+
+class StartLearningForm(FlaskForm):
+    num_random_learned = IntegerField('Number of Random Re-learn Cards',
+                                      default=5)
+    learn_date = DateField('Target Date', format="%Y-%m-%d")
+    submit = SubmitField('Start')
+
+
+class ClearLearningForm(FlaskForm):
+    submit = SubmitField('Clear')
+
+
+class LearningForm(FlaskForm):
+    not_ok = SubmitField('Not OK')
+    ok = SubmitField('OK')
+    next = SubmitField('Next')
