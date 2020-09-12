@@ -57,6 +57,4 @@ class ClearLearningForm(FlaskForm):
 
 
 class LearningForm(FlaskForm):
-    not_ok = SubmitField('Not OK')
-    ok = SubmitField('OK')
     next = SubmitField('Next')

@@ -14,7 +14,7 @@
             </div>
         </div>
         <div class="col-md-1">
-            <a class="btn btn-default" id="displayBtn" card_id="{{ card.id }}">Display</a>
+            <a class="btn btn-info" id="displayBtn" card_id="{{ card.id }}">Display</a>
         </div>
     </div>
     <div class='row-sm-1'>
@@ -28,15 +28,11 @@
                 <form action="" method="post">
                     {{ form.hidden_tag() }}
                     <input type="hidden" name="button" value="next">
-                    <p>{{ form.next(class='btn btn-info', style="width: 80px") }}</p>
+                    <p>{{ form.next(class='btn btn-info', style="width: 160px") }}</p>
                 </form>
             </div>
             <div class="col-sm-1" id="ok">
-                <form action="" method="post">
-                    {{ form.hidden_tag() }}
-                    <input type="hidden" name="button" value="ok">
-                    <p>{{ form.ok(class='btn btn-success', style="width: 80px") }}</p>
-                </form>
+                <p class='btn btn-success' style='width: 80px'>OK</p>
             </div>
         </form>
     </div>

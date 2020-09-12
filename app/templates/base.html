@@ -165,6 +165,13 @@
             $("#ok").hide();
         })
 
+        $("#ok").click(function() {
+            displayBack($("#displayBtn"));
+            $("#notOK").hide();
+            $("#next").show();
+            $("#ok").hide();
+        })
+
         function displayBack(sourceElem) {
             var card_id = sourceElem.attr("card_id");
             var displayElem = $("#displayTarget");
