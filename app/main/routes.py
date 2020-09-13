@@ -47,6 +47,7 @@ def index():
         if cards.has_prev else None
     return render_template('index.html', title='Home',
                            form=form, cards=cards.items,
+                           mode='create',
                            next_url=next_url, prev_url=prev_url)
 
 @bp.before_app_request
@@ -159,7 +160,7 @@ def edit_card(card_id):
         form.use_case.data = card.use_case
         form.source.data = card.source
         form.reverse_asking.data = card.reverse_asking
-    return render_template("edit_card.html", form=form)
+    return render_template("edit_card.html", form=form, mode='edit')
 
 @bp.route('/start_learning', methods=['GET', 'POST'])
 @login_required
@@ -199,14 +200,14 @@ def learning(num_random_learned, learn_date):
         return render_template('end_learning.html', cursor=lh.cursor)
     form = LearningForm()
     if form.validate_on_submit():
-        if request.form['button'] == 'next':
+        if request.form['button'] == 'not_ok':
             card.handle_not_ok()
         elif request.form['button'] == 'ok':
             card.handle_ok()
-        lh.cursor += 1
-        session['lh'] = lh.serialize()
         db.session.add(card)
         db.session.commit()
+        lh.cursor += 1
+        session['lh'] = lh.serialize()
         card = lh.get_current_card()
         if card is None:
             session['lh'] = None

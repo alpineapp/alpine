@@ -20,7 +20,7 @@ class Config(object):
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     ADMINS = ['prinskyen@gmail.com']
     # Pagination
-    CARDS_PER_PAGE = 3
+    CARDS_PER_PAGE = 10
     # Full-text search
     ELASTICSEARCH_URL = os.environ.get('ELASTICSEARCH_URL')
     # Logging

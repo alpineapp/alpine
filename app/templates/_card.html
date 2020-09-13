@@ -1,32 +1,32 @@
 <tr id="card-{{ card.id }}" card-id='{{ card.id }}'>
-    <td width='300px' style='vertical-align: middle;'>
+    <td width='300px'>
         {% if card.deck %}
         {{ card.get_deck_name() }}
         {% endif %}
     </td>
-    <td width='300px' style='vertical-align: middle;'>
-        <span class="card_popup"'>
+    <td width='300px'>
+        <span class="card_popup">
             <p><a href="{{ url_for('main.card_profile', card_id=card.id) }}">{{ card.front }}</a></p>
         </span>
     </td>
-    <td width='600px' style='vertical-align: middle;'>
+    <td width='600px'>
         {{ card.back }}
     </td>
-    <td width='300px' style='vertical-align: middle;'>
+    <td width='300px'>
         {% if card.next_date %}
         {{ card.next_date.strftime('%Y-%m-%d') }}
         {% endif %}
     </td>
-    <td width='100px' style='vertical-align: middle;'>
+    <td width='100px'>
         {{ card.bucket }}
     </td>
-    <td width='400px' style='vertical-align: middle;'>
+    <td width='400px'>
         {{ card.example }}
     </td>
-    <td width='400px' style='vertical-align: middle;'>
+    <td width='400px'>
         {{ card.use_case }}
     </td>
-    <td width='200px' style='vertical-align: middle;'>
+    <td width='200px'>
         {{ card.source }}
     </td>
 </tr>

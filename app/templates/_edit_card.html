@@ -7,27 +7,34 @@
         <div class="alert alert-danger" role="alert">{{ error }}</div>
     {% endif %}
     {% endwith %}
-    <div class="form-group">
+    <div class='form-group'>
         <label for="frontLabel">{{ form.front.label }}</label>
-        {{ form.front(rows=1, placeholder='study',
-                      class='form-control') }}
+        {{ form.front(rows=1, placeholder='study', class='form-control') }}
     </div>
     <div class="form-group">
         <label for="backLabel">{{ form.back.label }}</label>
         {{ form.back(rows=4, placeholder='look at closely in order to observe or read',
                       class='form-control') }}
     </div>
-    <div class="form-group">
-        <label for="deckLabel">{{ form.deck.label }}</label>
-        {{ form.deck(class='form-control') }}
-    </div>
-    <div class="form-group">
-        <label for="startDateLabel">{{ form.start_date.label }}</label>
-        {{ form.start_date(class='form-control') }}
-    </div>
-    <div class="form-group">
-        <label for="bucketLabel">{{ form.bucket.label }}</label>
-        {{ form.bucket(rows=1, placeholder=1, class='form-control') }}
+    <div class="row form-row">
+        <div class='form-group col-md-3'>
+        <label>{{ form.deck.label.text }}</label>
+            {{ form.deck(class='form-control') }}
+        </div>
+        <div class='form-group col-md-2'>
+            <label>{{ form.start_date.label.text }}</label>
+            {{ form.start_date(class='form-control') }}
+        </div>
+        {% if mode == 'edit' %}
+        <div class='form-group col-sm-1'>
+            <label>{{ form.bucket.label.text }}</label>
+            {{ form.bucket(class='form-control') }}
+        </div>
+        <div class='form-group col-md-2'>
+            <label>{{ form.reverse_asking.label.text }}</label>
+            {{ form.reverse_asking(class='checkbox') }}
+        </div>
+        {% endif %}
     </div>
     <div class="form-group">
         <label for="exampleLabel">{{ form.example.label }}</label>
@@ -39,10 +46,5 @@
         {{ form.source(rows=1, placeholder='https://www.google.com',
                        class='form-control') }}
     </div>
-    <div class="form-group">
-        <label for="reverseAskingLabel">{{ form.reverse_asking.label }}</label>
-        {{ form.reverse_asking(rows=1, placeholder='https://www.google.com',
-                       class='form-control') }}
-    </div>
-    <p>{{ form.submit(class='btn btn-default') }}</p>
+    <p>{{ form.submit(class='btn btn-primary') }}</p>
 </form>

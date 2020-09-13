@@ -2,13 +2,12 @@
 
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
-    <a class='btn btn-success' href="{{ url_for('main.start_learning') }}">Start learning</a>
     {% if form %}
     <h3> Quickly create a new card </h3>
     {% include "_edit_card.html" %}
     {% endif %}
     <br>
-    <h3> Your cards </h3>
+    <h3> Recently updated cards </h3>
     <table class="table table-hover">
         <tr>
             <th>Deck</th>
