@@ -234,11 +234,37 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
                           default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     deck_id = db.Column(db.Integer, db.ForeignKey('deck.id'))
+    start_date = db.Column(db.DateTime, default=datetime.utcnow().date)
+    next_date = db.Column(db.DateTime, index=True)
+    bucket = db.Column(db.Integer)
+    example = db.Column(db.String(2048))
+    use_case = db.Column(db.String(2048))
+    source = db.Column(db.String(2048))
+    reverse_asking = db.Column(db.Boolean)
 
     def get_deck_name(self):
         if self.deck_id:
             deck_name = Deck.query.get(self.deck_id).name
             return deck_name
+
+    def set_next_date(self):
+        if self.bucket >= 6:
+            self.next_date = None
+            return
+        plus_next_day = self._get_day_from_bucket(self.bucket)
+        if plus_next_day is not None:
+            self.next_date = self.start_date + timedelta(days=plus_next_day)
+        else:
+            self.next_date = None
+
+    def handle_not_ok(self):
+        self.bucket = max(1, self.bucket - 1)
+        self.start_date = datetime.utcnow().date()
+        self.set_next_date()
+
+    def handle_ok(self):
+        self.bucket = min(6, self.bucket + 1)
+        self.set_next_date()
 
     def __repr__(self):
         return f'<Deck {self.get_deck_name()} - Card {self.front}>'
@@ -251,6 +277,13 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
+            'start_date': self.start_date,
+            'next_date': self.next_date,
+            'bucket': self.bucket,
+            'example': self.example,
+            'use_case': self.use_case,
+            'source': self.source,
+            'reverse_asking': self.reverse_asking,
             "_links": {
                 "self": url_for("api.get_card", id=self.id)
             }
@@ -258,11 +291,22 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         return data
 
     def from_dict(self, data):
-        client_set_fields = ['front', 'back', 'user_id', 'deck_id']
+        client_set_fields = ['front', 'back', 'user_id', 'deck_id', 'start_date',
+                             'next_date', 'bucket', 'example', 'use_case',
+                             'source', 'reverse_asking']
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])
         setattr(self, 'timestamp', datetime.utcnow())
+
+    @staticmethod
+    def _get_day_from_bucket(bucket):
+        if bucket <= 1:
+            return 0
+        elif bucket <= 3:
+            return 1
+        elif bucket <= 5:
+            return 2
 
 
 class Notification(db.Model):

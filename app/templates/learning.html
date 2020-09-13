@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+{% if card is not none %}
+<div class='container' id="card-{{ card.id }}" card-id='{{ card.id }}'>
+    <div class="col-lg-offset-2 col-md-1"></div>
+    <div class="col-lg-6">
+        <div class="row">
+            <div class="progress">
+                {% if cursor == 0 %}
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{ cursor }}"
+                     aria-valuemin="0" aria-valuemax="{{ size }}"
+                     style="width: 100%">
+                    Total: {{ size }}
+                </div>
+                {% else %}
+                <div class="progress-bar" role="progressbar" aria-valuenow="{{ cursor }}"
+                     aria-valuemin="0" aria-valuemax="{{ size }}"
+                     style="width: {{ (cursor) * 100 / size }}%">
+                    {{ cursor }} / {{ size }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <h4>Deck <span style="font-weight: 500;">{{ card.deck.name }}</span></h4>
+            <div class="panel panel-default">
+                <div class="panel-heading">{{ card.front }}</div>
+                <ul class="list-group">
+                    <li class="list-group-item"><p>Bucket <span class="badge">{{ card.bucket }}</span></p></li>
+                </ul>
+                <div class="panel-body displayTarget" id='displayTarget' style="height:300px"></div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-4" style="margin-bottom: 4px;">
+                <a class="btn btn-default btn-block" id="displayBtn" card_id="{{ card.id }}">Display</a>
+            </div>
+            <div class="col-sm-4" style="margin-bottom: 4px;" id='notOK'>
+                <p class='btn btn-danger btn-block'>Not OK</p>
+            </div>
+            <div class="col" id="next" style="display:none">
+                <form action="" method="post">
+                    {{ form.hidden_tag() }}
+                    <input id="nextInput" type="hidden" name="button" value="next">
+                    <p>{{ form.next(class='btn btn-default btn-block') }}</p>
+                </form>
+            </div>
+            <div class="col-sm-4" style="margin-bottom: 4px;" id="ok">
+                <p class='btn btn-success btn-block'>OK</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

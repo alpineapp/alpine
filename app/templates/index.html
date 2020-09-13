@@ -2,21 +2,22 @@
 
 {% block app_content %}
     <h1>Hi, {{ current_user.username }}!</h1>
-    {% if current_user.last_seen %}
-    <p>Last seen on: {{ moment(current_user.last_seen).fromNow() }}</p>
-    {% endif %}
     {% if form %}
     <h3> Quickly create a new card </h3>
     {% include "_edit_card.html" %}
     {% endif %}
     <br>
-    <h3> Your cards </h3>
+    <h3> Recently updated cards </h3>
     <table class="table table-hover">
         <tr>
             <th>Deck</th>
             <th>Definition</th>
             <th>Explanation</th>
-            <th>Updated at</th>
+            <th>Next date</th>
+            <th>Bucket</th>
+            <th>Example</th>
+            <th>Use case</th>
+            <th>Source</th>
             <th></th>
         </tr>
         {% for card in cards %}
