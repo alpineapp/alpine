@@ -25,7 +25,7 @@
                 </button>
                 <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
                 <div class="nav navbar-nav navbar-btn">
-                    <a class='btn btn-success' href="{{ url_for('main.start_learning') }}">
+                    <a class='btn btn-primary' href="{{ url_for('main.start_learning') }}">
                         Start learning
                     </a>
                 </div>
@@ -165,7 +165,9 @@
             $("#nextInput").val("not_ok");
             $("#next").show();
             $("#ok").hide();
-            displayBack($("#displayBtn"));
+            if ($("#displayBtn").is(":visible")) {
+                displayBack($("#displayBtn"));
+            }
         })
 
         $("#ok").click(function() {
@@ -173,19 +175,25 @@
             $("#nextInput").val("ok");
             $("#next").show();
             $("#ok").hide();
-            displayBack($("#displayBtn"));
+            if ($("#displayBtn").is(":visible")) {
+                displayBack($("#displayBtn"));
+            }
         })
 
         function displayBack(sourceElem) {
             var card_id = sourceElem.attr("card_id");
             var displayElem = $("#displayTarget");
             displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
+            sourceElem.hide();
             $.post('/display_back', {
                 card_id: card_id
             }).done(function(response) {
+                $("#backPlaceholder").hide();
+                displayElem.show();
                 displayElem.text(response['text']);
-                sourceElem.hide();
             }).fail(function() {
+                $("#backPlaceholder").hide();
+                displayElem.show();
                 displayElem.text("{{ 'Error: Could not contact server.' }}");
             });
         }
