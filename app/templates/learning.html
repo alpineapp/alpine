@@ -23,14 +23,15 @@
             </div>
         </div>
         <div class="row">
-            <h4>Deck <span style="font-weight: 500;">{{ card.deck.name }}</span></h4>
+            <h4>Deck {{ card.deck.name }}</h4>
             <div class="panel panel-default">
                 <div class="panel-heading">{{ card.front }}</div>
                 <ul class="list-group">
                     <li class="list-group-item"><p>Bucket <span class="badge">{{ card.bucket }}</span></p></li>
                 </ul>
-                <div class="panel-body displayTarget" id='displayTarget' style="height:300px"></div>
+                <div class="panel-body" style="display: none; background-color:rgb(216, 234, 246); height: 150px" id='displayTarget'></div>
             </div>
+            <div id="backPlaceholder" class="row" style="height: 150px"></div>
         </div>
         <div class="row">
             <div class="col-sm-4" style="margin-bottom: 4px;">
@@ -47,7 +48,7 @@
                 </form>
             </div>
             <div class="col-sm-4" style="margin-bottom: 4px;" id="ok">
-                <p class='btn btn-success btn-block'>OK</p>
+                <p class='btn btn-primary btn-block'>OK</p>
             </div>
         </div>
     </div>
