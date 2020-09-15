@@ -35,7 +35,10 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     with app.app_context():
-        migrate.init_app(app, db)
+        if db.engine.url.drivername == 'sqlite':
+            migrate.init_app(app, db, render_as_batch=True)
+        else:
+            migrate.init_app(app, db)
     login.init_app(app)
     mail.init_app(app)
     bootstrap.init_app(app)

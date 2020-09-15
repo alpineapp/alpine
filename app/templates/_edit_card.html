@@ -1,8 +1,8 @@
-{% import 'bootstrap/wtf.html' as wtf %}
+{% import 'bootstrap/form.html' as wtf %}
 
 <form action="" method="post">
     {{ form.hidden_tag() }}
-    {% with error = wtf.form_errors(form) %}
+    {% with error = form.errors %}
     {% if error %}
         <div class="alert alert-danger" role="alert">{{ error }}</div>
     {% endif %}
