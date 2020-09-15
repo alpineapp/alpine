@@ -34,10 +34,7 @@ def export_cards(user_id):
         i = 0
         total_cards = user.cards.count()
         for card in user.cards.order_by(Card.timestamp.asc()):
-            data.append({'front': card.front,
-                         'back': card.back,
-                         'timestamp': card.timestamp.isoformat() + 'Z'})
-            time.sleep(5)
+            data.append(card.to_dict())
             i += 1
             _set_task_progress(100 * i // total_cards)
         send_email('[Alpine App] Your cards',

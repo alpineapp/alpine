@@ -1,205 +1,206 @@
-
 {% extends 'bootstrap/base.html' %}
 
 {% block styles %}
 {{super()}}
 <link rel="stylesheet"
-      href="{{url_for('static', filename='general.css')}}">
+href="{{url_for('static', filename='general.css')}}">
 <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
-      rel="stylesheet">
+rel="stylesheet">
 {% endblock %}
 
 {% block title %}
-    {% if title %}{{ title }} - Alpine{% else %}Welcome to Alpine{% endif %}
+{% if title %}{{ title }} - Alpine{% else %}Welcome to Alpine{% endif %}
 {% endblock %}
 
 {% block navbar %}
-    <nav class="navbar navbar-default">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
-                <div class="nav navbar-nav navbar-btn">
-                    <a class='btn btn-primary' href="{{ url_for('main.start_learning') }}">
-                        Start learning
-                    </a>
-                </div>
-            </div>
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav navbar-right">
-                    {% if current_user.is_anonymous %}
-                    <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-                    {% else %}
-                    <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
-                    {% endif %}
-                </ul>
-                {% if g.search_form %}
-                <form class="navbar-form navbar-left" method="get"
-                        action="{{ url_for('main.search') }}">
-                    <div class="form-group">
-                        {{ g.search_form.q(size=20, class='form-control',
-                            placeholder=g.search_form.q.label.text) }}
-                    </div>
-                </form>
-                {% endif %}
-            </div>
+<nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
+    <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
+    <a class='btn btn-primary mr-3' href="{{ url_for('main.start_learning') }}">
+        Start learning
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        {% if g.search_form %}
+        <div class='navbar-nav'>
+            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('main.search') }}">
+                {{ g.search_form.q(size=20, class='form-control mr-sm-2', placeholder=g.search_form.q.label.text) }}
+            </form>
         </div>
-    </nav>
+        {% endif %}
+        <div class='mr-auto'></div>
+        <div class="navbar-nav">
+            <ul class="navbar-nav">
+                {% if current_user.is_anonymous %}
+                <li class='nav-item'><a class='nav-link' href="{{ url_for('auth.login') }}">Login</a></li>
+                {% else %}
+                <li class='nav-item'><a class='nav-link' href="{{ url_for('auth.logout') }}">Logout</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
 {% endblock %}
 
 {% block content %}
-    <div class="container">
-        {% if current_user.is_authenticated %}
-        {% with tasks = current_user.get_tasks_in_progress() %}
-        {% if tasks %}
-            {% for task in tasks %}
-            <div class="alert alert-info" role="alert">
-                {{ task.description }}
-                <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
-            </div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-        {% endif %}
-        {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-info" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        {# application content needs to be provided in the app_content block #}
-        {% block app_content %}{% endblock %}
+<div class="container">
+    {% if current_user.is_authenticated %}
+    {% with tasks = current_user.get_tasks_in_progress() %}
+    {% if tasks %}
+    {% for task in tasks %}
+    <div class="alert alert-info" role="alert">
+        {{ task.description }}
+        <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
     </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    {% endif %}
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-info" role="alert">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+    
+    {# application content needs to be provided in the app_content block #}
+    {% block app_content %}{% endblock %}
+</div>
 {% endblock %}
 
 {% block scripts %}
-    {{ super() }}
-    {{ moment.include_moment() }}
+{{ super() }}
+{{ moment.include_moment() }}
 
-    <script>
-        $(function() {
-            var timer = null;
-            $('.card_popup').hover(
-                function(event) {
-                    // mouse in event handler
-                    var elem = $(event.currentTarget);
-                    timer = setTimeout(function() {
-                        timer = null;
-                        // popup logic goes here
-                        var card_id = elem.closest("tr").attr("card-id");
-                        xhr = $.ajax(
-                            '/card/' + card_id + '/popup').done(
-                                function(data) {
-                                    xhr = null;
-                                    // create and display popup here
-                                    elem.popover({
-                                        trigger: 'manual',
-                                        html: true,
-                                        animation: false,
-                                        container: elem,
-                                        content: data
-                                    }).popover('show');
-                                    flask_moment_render_all();
-                                }
-                            )
-                    }, 1000)
-                },
-                function(event) {
-                    // mouse out event handler
-                    var elem = $(event.currentTarget);
-                    if (timer) {
-                        clearTimeout(timer);
-                        timer = null;
+<script>
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
+
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+
+
+    // This function breaks after changing to Bootstrap 4
+    // $(function() {
+    //     var timer = null;
+    //     $('.card_popup').hover(
+    //     function(event) {
+    //         // mouse in event handler
+    //         var elem = $(event.currentTarget);
+    //         timer = setTimeout(function() {
+    //             timer = null;
+    //             // popup logic goes here
+    //             var card_id = elem.closest("tr").attr("card-id");
+    //             xhr = $.ajax(
+    //             '/card/' + card_id + '/popup').done(
+    //             function(data) {
+    //                 xhr = null;
+    //                 // create and display popup here
+    //                 elem.popover({
+    //                     trigger: 'manual',
+    //                     html: true,
+    //                     animation: false,
+    //                     container: elem,
+    //                     content: data
+    //                 }).popover('show');
+    //                 flask_moment_render_all();
+    //             }
+    //             )
+    //         }, 1000)
+    //     },
+    //     function(event) {
+    //         // mouse out event handler
+    //         var elem = $(event.currentTarget);
+    //         if (timer) {
+    //             clearTimeout(timer);
+    //             timer = null;
+    //         }
+    //         else if (xhr) {
+    //             xhr.abort();
+    //             xhr = null;
+    //         }
+    //         else {
+    //             // destroy popup here
+    //             elem.popover('destroy');
+    //         }
+    //     }
+    //     )
+    // });
+    
+    {% if current_user.is_authenticated %}
+    $(function() {
+        var since = 0;
+        setInterval(function() {
+            $.ajax('{{ url_for("main.notifications") }}?since=' + since).done(
+            function(notifications) {
+                for (var i = 0; i < notifications.length; i++) {
+                    switch (notifications[i].name) {
+                        case 'unread_message_count':
+                        set_message_count(notifications[i].data);
+                        break;
+                        case 'task_progress':
+                        set_task_progress(
+                        notifications[i].data.task_id,
+                        notifications[i].data.progress);
+                        break;
                     }
-                    else if (xhr) {
-                        xhr.abort();
-                        xhr = null;
-                    }
-                    else {
-                        // destroy popup here
-                        elem.popover('destroy');
-                    }
+                    since = notifications[i].timestamp;
                 }
-            )
-        });
-
-        {% if current_user.is_authenticated %}
-        $(function() {
-            var since = 0;
-            setInterval(function() {
-                $.ajax('{{ url_for("main.notifications") }}?since=' + since).done(
-                    function(notifications) {
-                        for (var i = 0; i < notifications.length; i++) {
-                            switch (notifications[i].name) {
-                                case 'unread_message_count':
-                                    set_message_count(notifications[i].data);
-                                    break;
-                                case 'task_progress':
-                                    set_task_progress(
-                                        notifications[i].data.task_id,
-                                        notifications[i].data.progress);
-                                    break;
-                            }
-                            since = notifications[i].timestamp;
-                        }
-                    }
-                );
-            }, 10000);
-        });
-        {% endif %}
-
-        function set_task_progress(task_id, progress) {
-            $('#' + task_id + '-progress').text(progress);
-        }
-
-        // For learning session JS utilities
-        $("#notOK").click(function() {
-            $("#notOK").hide();
-            $("#nextInput").val("not_ok");
-            $("#next").show();
-            $("#ok").hide();
-            if ($("#displayBtn").is(":visible")) {
-                displayBack($("#displayBtn"));
             }
-        })
-
-        $("#ok").click(function() {
-            $("#notOK").hide();
-            $("#nextInput").val("ok");
-            $("#next").show();
-            $("#ok").hide();
-            if ($("#displayBtn").is(":visible")) {
-                displayBack($("#displayBtn"));
-            }
-        })
-
-        function displayBack(sourceElem) {
-            var card_id = sourceElem.attr("card_id");
-            var displayElem = $("#displayTarget");
-            displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
-            sourceElem.hide();
-            $.post('/display_back', {
-                card_id: card_id
-            }).done(function(response) {
-                $("#backPlaceholder").hide();
-                displayElem.show();
-                displayElem.text(response['text']);
-            }).fail(function() {
-                $("#backPlaceholder").hide();
-                displayElem.show();
-                displayElem.text("{{ 'Error: Could not contact server.' }}");
-            });
+            );
+        }, 10000);
+    });
+    {% endif %}
+    
+    function set_task_progress(task_id, progress) {
+        $('#' + task_id + '-progress').text(progress);
+    }
+    
+    // For learning session JS utilities
+    $("#fail").click(function() {
+        $("#fail").hide();
+        $("#nextInput").val("fail");
+        $("#next").show();
+        $("#ok").hide();
+        if ($("#displayBtn").is(":visible")) {
+            displayBack($("#displayBtn"));
         }
-
-        $("#displayBtn").click(function() {
-            displayBack($(this));
-        })
-    </script>
+    })
+    
+    $("#ok").click(function() {
+        $("#fail").hide();
+        $("#nextInput").val("ok");
+        $("#next").show();
+        $("#ok").hide();
+        if ($("#displayBtn").is(":visible")) {
+            displayBack($("#displayBtn"));
+        }
+    })
+    
+    function displayBack(sourceElem) {
+        var card_id = sourceElem.attr("card_id");
+        var displayElem = $("#displayTarget");
+        displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
+        sourceElem.hide();
+        $.post('/display_back', {
+            card_id: card_id
+        }).done(function(response) {
+            $("#backPlaceholder").hide();
+            displayElem.show();
+            displayElem.text(response['text']);
+        }).fail(function() {
+            $("#backPlaceholder").hide();
+            displayElem.show();
+            displayElem.text("{{ 'Error: Could not contact server.' }}");
+        });
+    }
+    
+    $("#displayBtn").click(function() {
+        displayBack($(this));
+    })
+</script>
 {% endblock %}

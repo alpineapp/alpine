@@ -28,8 +28,8 @@ def index():
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
                     start_date=form.start_date.data, bucket=form.bucket.data,
-                    example=form.example.data,
-                    use_case=form.use_case.data, reverse_asking=form.reverse_asking.data)
+                    example=form.example.data, source=form.source.data,
+                    reverse_asking=form.reverse_asking.data)
         card.set_next_date()
         db.session.add(card)
         db.session.commit()
@@ -142,7 +142,6 @@ def edit_card(card_id):
         card.start_date = form.start_date.data
         card.bucket = form.bucket.data
         card.example = form.example.data
-        card.use_case = form.use_case.data
         card.source = form.source.data
         card.reverse_asking = form.reverse_asking.data
         card.set_next_date()
@@ -157,7 +156,6 @@ def edit_card(card_id):
         form.start_date.data = card.start_date
         form.bucket.data = card.bucket
         form.example.data = card.example
-        form.use_case.data = card.use_case
         form.source.data = card.source
         form.reverse_asking.data = card.reverse_asking
     return render_template("edit_card.html", form=form, mode='edit')
@@ -200,8 +198,8 @@ def learning(num_random_learned, learn_date):
         return render_template('end_learning.html', cursor=lh.cursor)
     form = LearningForm()
     if form.validate_on_submit():
-        if request.form['button'] == 'not_ok':
-            card.handle_not_ok()
+        if request.form['button'] == 'fail':
+            card.handle_fail()
         elif request.form['button'] == 'ok':
             card.handle_ok()
         db.session.add(card)
