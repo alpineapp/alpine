@@ -16,7 +16,6 @@
             <th>Next date</th>
             <th>Bucket</th>
             <th>Example</th>
-            <th>Use case</th>
             <th>Source</th>
             <th></th>
         </tr>
@@ -25,14 +24,14 @@
         {% endfor %}
     </table>
     <nav aria-label="...">
-        <ul class="pager">
-            <li class="previous{% if not prev_url %} disabled{% endif %}">
-                <a href="{{ prev_url or '#' }}">
+        <ul class="pagination justify-content-center">
+            <li class="page-item{% if not prev_url %} disabled{% endif %}">
+                <a class="page-link" href="{{ prev_url or '#' }}" tabindex="-1" aria-disabled="true">
                     <span aria-hidden="true">&larr;</span> Newer cards
                 </a>
             </li>
-            <li class="next{% if not next_url %} disabled{% endif %}">
-                <a href="{{ next_url or '#' }}">
+            <li class="page-item{% if not next_url %} disabled{% endif %}">
+                <a class="page-link" href="{{ next_url or '#' }}">
                     Older cards <span aria-hidden="true">&rarr;</span>
                 </a>
             </li>

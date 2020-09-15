@@ -1,8 +1,8 @@
-{% import 'bootstrap/wtf.html' as wtf %}
+{% import 'bootstrap/form.html' as wtf %}
 
 <form action="" method="post">
     {{ form.hidden_tag() }}
-    {% with error = wtf.form_errors(form) %}
+    {% with error = form.errors %}
     {% if error %}
         <div class="alert alert-danger" role="alert">{{ error }}</div>
     {% endif %}
@@ -46,5 +46,9 @@
         {{ form.source(rows=1, placeholder='https://www.google.com',
                        class='form-control') }}
     </div>
-    <p>{{ form.submit(class='btn btn-primary') }}</p>
+    <div class="row form-row">
+        <div class="form-group col-md-3">
+            {{ form.submit(class='btn btn-primary col-md-12') }}
+        </div>
+    </div>
 </form>

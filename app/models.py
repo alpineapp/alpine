@@ -238,7 +238,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     next_date = db.Column(db.DateTime, index=True)
     bucket = db.Column(db.Integer)
     example = db.Column(db.String(2048))
-    use_case = db.Column(db.String(2048))
     source = db.Column(db.String(2048))
     reverse_asking = db.Column(db.Boolean)
 
@@ -257,7 +256,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         else:
             self.next_date = None
 
-    def handle_not_ok(self):
+    def handle_fail(self):
         self.bucket = max(1, self.bucket - 1)
         self.start_date = datetime.utcnow().date()
         self.set_next_date()
@@ -281,7 +280,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             'next_date': self.next_date,
             'bucket': self.bucket,
             'example': self.example,
-            'use_case': self.use_case,
             'source': self.source,
             'reverse_asking': self.reverse_asking,
             "_links": {
@@ -292,7 +290,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     def from_dict(self, data):
         client_set_fields = ['front', 'back', 'user_id', 'deck_id', 'start_date',
-                             'next_date', 'bucket', 'example', 'use_case',
+                             'next_date', 'bucket', 'example',
                              'source', 'reverse_asking']
         for field in client_set_fields:
             if field in data:
