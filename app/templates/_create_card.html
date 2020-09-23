@@ -1,0 +1,34 @@
+{% import 'bootstrap/form.html' as wtf %}
+
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    {% with error = form.errors %}
+    {% if error %}
+        <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
+    {% endwith %}
+    <div class='form-group'>
+        <label for="frontLabel">{{ form.front.label }}</label>
+        {{ form.front(rows=1, placeholder='study', class='form-control') }}
+    </div>
+    <div class="form-group">
+        <label for="backLabel">{{ form.back.label }}</label>
+        {{ form.back(rows=4, placeholder='look at closely in order to observe or read',
+                      class='form-control') }}
+    </div>
+    <div class="row form-row">
+        <div class='form-group col-md-3'>
+        <label>{{ form.deck.label.text }}</label>
+            {{ form.deck(class='form-control') }}
+        </div>
+        <div class='form-group col-md-2'>
+            <label>{{ form.start_date.label.text }}</label>
+            {{ form.start_date(class='form-control') }}
+        </div>
+    </div>
+    <div class="row form-row">
+        <div class="form-group col-md-3">
+            {{ form.submit(class='btn btn-primary w-100') }}
+        </div>
+    </div>
+</form>

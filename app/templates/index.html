@@ -4,25 +4,17 @@
     <h1>Hi, {{ current_user.username }}!</h1>
     {% if form %}
     <h3> Quickly create a new card </h3>
-    {% include "_edit_card.html" %}
+    {% include "_create_card.html" %}
     {% endif %}
     <br>
     <h3> Recently updated cards </h3>
-    <table class="table table-hover">
-        <tr>
-            <th>Deck</th>
-            <th>Definition</th>
-            <th>Explanation</th>
-            <th>Next date</th>
-            <th>Bucket</th>
-            <th>Example</th>
-            <th>Source</th>
-            <th></th>
-        </tr>
-        {% for card in cards %}
-            {% include '_card.html' %}
-        {% endfor %}
-    </table>
+    <div class="album py-2">
+        <div class="row">
+            {% for card in cards %}
+            {% include 'card.html' %}
+            {% endfor %}
+        </div>
+    </div>
     <nav aria-label="...">
         <ul class="pagination justify-content-center">
             <li class="page-item{% if not prev_url %} disabled{% endif %}">
