@@ -169,9 +169,10 @@ rel="stylesheet">
         $("#nextInput").val("fail");
         $("#next").show();
         $("#ok").hide();
-        if ($("#displayBtn").is(":visible")) {
+        if ($("#backPlaceholder").is(":visible")) {
             displayBack($("#displayBtn"));
         }
+        $("#displayBtn").hide();
     })
     
     $("#ok").click(function() {
@@ -179,16 +180,16 @@ rel="stylesheet">
         $("#nextInput").val("ok");
         $("#next").show();
         $("#ok").hide();
-        if ($("#displayBtn").is(":visible")) {
+        if ($("#backPlaceholder").is(":visible")) {
             displayBack($("#displayBtn"));
         }
+        $("#displayBtn").hide();
     })
-    
+
     function displayBack(sourceElem) {
         var card_id = sourceElem.attr("card_id");
         var displayElem = $("#displayTarget");
         displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
-        sourceElem.hide();
         $.post('/display_back', {
             card_id: card_id
         }).done(function(response) {
