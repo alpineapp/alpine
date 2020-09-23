@@ -16,7 +16,7 @@ rel="stylesheet">
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
     <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
     <a class='btn btn-primary mr-3' href="{{ url_for('main.start_learning') }}">
-        Start learning
+        Learn
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -59,12 +59,15 @@ rel="stylesheet">
     {% endif %}
     {% with messages = get_flashed_messages() %}
     {% if messages %}
-    {% for message in messages %}
+    {% for category, message in get_flashed_messages(with_categories=True) %}
+    {% if category != "message" %}
+    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+    {% else %}
     <div class="alert alert-info" role="alert">{{ message }}</div>
+    {% endif %}
     {% endfor %}
     {% endif %}
     {% endwith %}
-    
     {# application content needs to be provided in the app_content block #}
     {% block app_content %}{% endblock %}
 </div>

@@ -4,20 +4,24 @@ from app.models import Card
 
 
 class LearningHelper:
-    def __init__(self, num_random_learned, learn_date):
+    def __init__(self, num_random_learned, learn_date, deck_id):
         self.num_random_learned = num_random_learned
         self.learn_date = learn_date
         self.results = None
+        self.deck_id = deck_id
+        self.user_cards = current_user.cards
+        if deck_id:
+            self.user_cards = self.user_cards.filter(Card.deck_id == deck_id)
 
         self.cards = []
         self.cursor = 0
 
     def collect_tasks_missed(self):
-        cards = current_user.cards.filter(Card.next_date < self.learn_date).all()
+        cards = self.user_cards.filter(Card.next_date < self.learn_date).all()
         self.cards.extend(cards)
 
     def collect_tasks_today(self):
-        cards = current_user.cards.filter_by(next_date=self.learn_date).all()
+        cards = self.user_cards.filter_by(next_date=self.learn_date).all()
         self.cards.extend(cards)
 
     def collect_random_learned(self):

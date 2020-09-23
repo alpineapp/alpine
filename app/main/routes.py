@@ -121,14 +121,50 @@ def card_profile(card_id):
         return redirect(url_for('main.index'))
     return render_template('card_profile.html', card=card, form=form)
 
+@bp.route('/<deck_id>/create_card', methods=['GET', 'POST'])
+@login_required
+def create_card(deck_id):
+    form = CardForm()
+    deck = Deck.query.get_or_404(deck_id)
+    if form.validate_on_submit():
+        if form.deck.data != deck.name:
+            flash('You entered a different deck!')
+            return redirect(url_for('main.deck_profile', deck_id=deck.id))
+        card = Card(front=form.front.data, back=form.back.data,
+                    deck_id=deck.id, user_id=current_user.id,
+                    start_date=form.start_date.data, bucket=form.bucket.data,
+                    example=form.example.data, source=form.source.data,
+                    reverse_asking=form.reverse_asking.data)
+        card.set_next_date()
+        db.session.add(card)
+        db.session.commit()
+        flash('Your card is added!')
+        return redirect(url_for('main.deck_profile', deck_id=deck.id))
+    elif request.method == 'GET':
+        form.start_date.data = datetime.today()
+        form.deck.data = deck.name
+    return render_template('create_card.html', form=form)
+
 @bp.route('/card/<card_id>/edit_card', methods=['GET', 'POST'])
 @login_required
 def edit_card(card_id):
     card = Card.query.get_or_404(card_id)
+    deck = card.deck
     if current_user.id != card.user_id:
         return redirect(url_for('main.index'))
     form = CardForm()
-    if form.validate_on_submit():
+    delete_form = DeleteCardForm()
+    if request.method == "GET":
+        form.front.data = card.front
+        form.back.data = card.back
+        form.deck.data = card.deck.name
+        form.start_date.data = card.start_date
+        form.bucket.data = card.bucket
+        form.example.data = card.example
+        form.source.data = card.source
+        form.reverse_asking.data = card.reverse_asking
+        return render_template("edit_card.html", form=form, delete_form=delete_form, mode='edit')
+    if request.form['mode'] == 'submit' and form.validate_on_submit():
         deck_name = form.deck.data or "Unnamed"
         deck = current_user.decks.filter_by(name=deck_name).first()
         if not deck:
@@ -148,17 +184,24 @@ def edit_card(card_id):
         db.session.add(card)
         db.session.commit()
         flash('Your card is edited!')
-        return redirect(url_for('main.card_profile', card_id=card.id))
-    elif request.method == "GET":
-        form.front.data = card.front
-        form.back.data = card.back
-        form.deck.data = card.deck.name
-        form.start_date.data = card.start_date
-        form.bucket.data = card.bucket
-        form.example.data = card.example
-        form.source.data = card.source
-        form.reverse_asking.data = card.reverse_asking
-    return render_template("edit_card.html", form=form, mode='edit')
+    elif request.form['mode'] == 'delete':
+        db.session.delete(card)
+        db.session.commit()
+        flash('Your card is deleted!')
+    return redirect(url_for('main.deck_profile', deck_id=deck.id))
+
+@bp.route('/deck/<deck_id>', methods=['GET', 'POST'])
+@login_required
+def deck_profile(deck_id):
+    deck = Deck.query.get_or_404(deck_id)
+    if current_user.id != deck.user_id:
+        return redirect(url_for('main.index'))
+    form = DeleteCardForm()
+    if request.method == 'POST':
+        db.session.delete(deck)
+        db.session.commit()
+        return redirect(url_for('main.index'))
+    return render_template('deck_profile.html', deck=deck, form=form)
 
 @bp.route('/start_learning', methods=['GET', 'POST'])
 @login_required
@@ -168,21 +211,27 @@ def start_learning():
     if start_form.validate_on_submit() and request.form['mode'] == 'start':
         return redirect(url_for('main.learning',
                                 num_random_learned=start_form.num_random_learned.data, 
-                                learn_date=start_form.learn_date.data))
+                                learn_date=start_form.learn_date.data,
+                                deck_id=None))
     elif clear_form.validate_on_submit() and request.form['mode'] == 'clear':
         session['lh'] = None
     start_form.learn_date.data = datetime.today()
     return render_template("start_learning.html", start_form=start_form,
                            clear_form=clear_form)
 
-@bp.route('/learning?num_random_learned=<num_random_learned>&learn_date=<learn_date>', methods=['GET', 'POST'])
+@bp.route('/learning', methods=['GET', 'POST'])
 @login_required
-def learning(num_random_learned, learn_date):
+def learning():
+    num_random_learned = request.args.get('num_random_learned', 5)
+    learn_date = request.args.get('learn_date', datetime.today())
+    deck_id = request.args.get('deck_id')
     date_fmt = "%Y-%m-%d"
     if isinstance(learn_date, str):
         learn_date = datetime.strptime(learn_date, date_fmt)
-    lh = LearningHelper(num_random_learned, learn_date)
-    if session.get('lh'):
+    lh = LearningHelper(num_random_learned, learn_date, deck_id)
+    # If deck_id is not None then user is learning a new deck, which
+    # means we should forget his previous unfinished learning session
+    if session.get('lh') and not deck_id:
         lh_dict = session['lh']
         lh.deserialize(lh_dict)
     else:
