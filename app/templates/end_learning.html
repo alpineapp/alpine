@@ -1,9 +1,40 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-{% if cursor == 0 %}
+{% if lh.cursor == 0 %}
 <h1>You have no card to learn today!</h1>
 {% else %}
-<h1>Congratulations! You have learned {{ cursor }} cards today!</h1>
+<h3>Congratulations! You have completed today learning session.</h3>
+<h3>Here's the summary:</h3>
+<div class="row mt-3">
+    <div class="col-md-3 mb-lg-5">
+        <!-- Card -->
+        <div class="card card-hover-shadow h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-secondary">Success</h6>
+                <div class="row align-items-center mb-1">
+                    <div class="col-12">
+                        <span class="card-title h2 text-success">{{ lh.stats['num_ok'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Card -->
+    </div>
+    <div class="col-md-3 mb-lg-5">
+        <!-- Card -->
+        <div class="card card-hover-shadow h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-secondary">Fail</h6>
+                <div class="row align-items-center mb-1">
+                    <div class="col-12">
+                        <span class="card-title h2 text-danger">{{ lh.stats['num_fail'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Card -->
+    </div>
+</div>
 {% endif %}
 {% endblock %}

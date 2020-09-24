@@ -2,6 +2,51 @@
 {% import 'bootstrap/form.html' as wtf %}
 
 {% block app_content %}
+<div class="row">
+    <div class="col-md-3 mb-lg-5">
+        <!-- Card -->
+        <div class="card card-hover-shadow h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-secondary">Today's Objective</h6>
+                <div class="row align-items-center mb-1">
+                    <div class="col-12">
+                        <span class="card-title h2">{{ lh.stats['num_total'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Card -->
+    </div>
+    <div class="col-md-3 mb-lg-5">
+        <!-- Card -->
+        <div class="card card-hover-shadow h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-secondary">Estimated Duration</h6>
+                <div class="row align-items-center mb-1">
+                    <div class="col-12">
+                        <span class="card-title h2">{{ lh.stats['num_minutes'] }}</span><span class='text-secondary'> minutes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Card -->
+    </div>
+    <div class="col-md-3 mb-lg-5">
+        <!-- Card -->
+        <div class="card card-hover-shadow h-100">
+            <div class="card-body">
+                <h6 class="card-subtitle mb-2 text-secondary">Make Up</h6>
+                <div class="row align-items-center mb-1">
+                    <div class="col-12">
+                        <span class="card-title h2 text-danger">{{ lh.stats['num_missed'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- End Card -->
+    </div>
+</div>
+
 <form action="" method="post">
     {{ start_form.hidden_tag() }}
     <input type="hidden" name="mode" value="start">
