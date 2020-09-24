@@ -208,6 +208,12 @@ def deck_profile(deck_id):
 def start_learning():
     start_form = StartLearningForm()
     clear_form = ClearLearningForm()
+    lh = None
+    if request.method == 'GET':
+        lh = LearningHelper(5, datetime.today())
+        lh.collect_tasks_missed()
+        lh.collect_tasks_today()
+        lh.build()
     if start_form.validate_on_submit() and request.form['mode'] == 'start':
         return redirect(url_for('main.learning',
                                 num_random_learned=start_form.num_random_learned.data, 
@@ -215,9 +221,10 @@ def start_learning():
                                 deck_id=None))
     elif clear_form.validate_on_submit() and request.form['mode'] == 'clear':
         session['lh'] = None
+        return redirect(url_for('main.index'))
     start_form.learn_date.data = datetime.today()
     return render_template("start_learning.html", start_form=start_form,
-                           clear_form=clear_form)
+                           clear_form=clear_form, lh=lh)
 
 @bp.route('/learning', methods=['GET', 'POST'])
 @login_required
@@ -239,18 +246,20 @@ def learning():
         lh.collect_tasks_missed()
         lh.collect_tasks_today()
         lh.collect_random_learned()
-        lh.start()
+        lh.build()
         session['lh'] = lh.serialize()
     card = lh.get_current_card()
     if card is None:
         session['lh'] = None
-        return render_template('end_learning.html', cursor=lh.cursor)
+        return render_template('end_learning.html', lh=lh)
     form = LearningForm()
     if form.validate_on_submit():
         if request.form['button'] == 'fail':
             card.handle_fail()
+            lh.handle_fail(card)
         elif request.form['button'] == 'ok':
             card.handle_ok()
+            lh.handle_ok(card)
         db.session.add(card)
         db.session.commit()
         lh.cursor += 1
@@ -258,6 +267,6 @@ def learning():
         card = lh.get_current_card()
         if card is None:
             session['lh'] = None
-            return render_template('end_learning.html', cursor=lh.cursor)
+            return render_template('end_learning.html', lh=lh)
     return render_template('learning.html', form=form, card=card,
                            size=len(lh.cards), cursor=lh.cursor)
