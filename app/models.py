@@ -301,10 +301,14 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     def _get_day_from_bucket(bucket):
         if bucket <= 1:
             return 0
-        elif bucket <= 3:
+        elif bucket == 2:
             return 1
-        elif bucket <= 5:
+        elif bucket == 3:
             return 2
+        elif bucket == 4:
+            return 4
+        elif bucket == 5:
+            return 6
 
 
 class Notification(db.Model):
