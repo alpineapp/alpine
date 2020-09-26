@@ -16,15 +16,18 @@ class LearningHelper:
 
         self.cards = []
         self.stats = {
+            'num_total': None,
+            'num_minutes': None,
+            'num_makeup': None,
             'num_fail': 0,
             'num_ok': 0
         }
         self.cursor = 0
 
-    def collect_tasks_missed(self):
+    def collect_tasks_makeup(self):
         cards = self.user_cards.filter(Card.next_date < self.learn_date).all()
         self.cards.extend(cards)
-        self.stats['num_missed'] = len(cards)
+        self.stats['num_makeup'] = len(cards)
 
     def collect_tasks_today(self):
         cards = self.user_cards.filter_by(next_date=self.learn_date).all()

@@ -203,17 +203,32 @@ def deck_profile(deck_id):
         return redirect(url_for('main.index'))
     return render_template('deck_profile.html', deck=deck, form=form)
 
+def _today_cards():
+    lh = LearningHelper(5, datetime.today())
+    lh.collect_tasks_makeup()
+    lh.collect_tasks_today()
+    lh.collect_random_learned()
+    lh.build()
+    return lh
+
+@bp.route('/today_cards')
+@login_required
+def today_cards():
+    if session.get('lh') is None:
+        lh = _today_cards()
+        session['lh'] = lh.serialize()
+        return lh.stats
+    else:
+        lh = session.get('lh')
+        return lh['stats']
+
 @bp.route('/start_learning', methods=['GET', 'POST'])
 @login_required
 def start_learning():
+    lh = _today_cards()
+    session['lh'] = lh.serialize()
     start_form = StartLearningForm()
     clear_form = ClearLearningForm()
-    lh = None
-    if request.method == 'GET':
-        lh = LearningHelper(5, datetime.today())
-        lh.collect_tasks_missed()
-        lh.collect_tasks_today()
-        lh.build()
     if start_form.validate_on_submit() and request.form['mode'] == 'start':
         return redirect(url_for('main.learning',
                                 num_random_learned=start_form.num_random_learned.data, 
@@ -224,7 +239,7 @@ def start_learning():
         return redirect(url_for('main.index'))
     start_form.learn_date.data = datetime.today()
     return render_template("start_learning.html", start_form=start_form,
-                           clear_form=clear_form, lh=lh)
+                           clear_form=clear_form, lh_stats=lh.stats)
 
 @bp.route('/learning', methods=['GET', 'POST'])
 @login_required
@@ -236,18 +251,10 @@ def learning():
     if isinstance(learn_date, str):
         learn_date = datetime.strptime(learn_date, date_fmt)
     lh = LearningHelper(num_random_learned, learn_date, deck_id)
-    # If deck_id is not None then user is learning a new deck, which
-    # means we should forget his previous unfinished learning session
-    if session.get('lh') and not deck_id:
-        lh_dict = session['lh']
-        lh.deserialize(lh_dict)
-    else:
-        current_app.logger.info(f'Create new LearingHelper')
-        lh.collect_tasks_missed()
-        lh.collect_tasks_today()
-        lh.collect_random_learned()
-        lh.build()
-        session['lh'] = lh.serialize()
+    if session.get('lh') is None:
+        today_cards()
+    lh_dict = session['lh']
+    lh.deserialize(lh_dict)
     card = lh.get_current_card()
     if card is None:
         session['lh'] = None
