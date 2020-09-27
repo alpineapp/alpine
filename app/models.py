@@ -227,6 +227,8 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
 
 class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ['front', 'back']
+    MAX_CHAR_BACK = 150
+    MAX_CHAR_FRONT = 60
     id = db.Column(db.Integer, primary_key=True)
     front = db.Column(db.String(500))
     back = db.Column(db.String(1000))
@@ -245,6 +247,18 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         if self.deck_id:
             deck_name = Deck.query.get(self.deck_id).name
             return deck_name
+
+    def preview_back(self):
+        if len(self.back) > self.MAX_CHAR_BACK:
+            display_str = f"{self.back[:self.MAX_CHAR_BACK]}..."
+            return display_str
+        return self.back
+
+    def preview_front(self):
+        if len(self.front) > self.MAX_CHAR_FRONT:
+            display_str = f"{self.front[:self.MAX_CHAR_FRONT]}..."
+            return display_str
+        return self.front
 
     def set_next_date(self):
         if self.bucket >= 6:
