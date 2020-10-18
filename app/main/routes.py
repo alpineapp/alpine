@@ -184,8 +184,8 @@ def deck_profile(deck_id):
         return redirect(url_for('main.index'))
     return render_template('deck_profile.html', deck=deck, form=form)
 
-def _today_cards():
-    lh = LearningHelper(5, datetime.today())
+def get_cards_to_learn(deck_id=None):
+    lh = LearningHelper(5, datetime.today(), deck_id=deck_id)
     lh.collect_tasks_makeup()
     lh.collect_tasks_today()
     lh.collect_random_learned()
@@ -196,7 +196,7 @@ def _today_cards():
 @login_required
 def today_cards():
     if session.get('lh') is None:
-        lh = _today_cards()
+        lh = get_cards_to_learn()
         session['lh'] = lh.serialize()
         return lh.stats
     else:
@@ -206,7 +206,7 @@ def today_cards():
 @bp.route('/start_learning', methods=['GET', 'POST'])
 @login_required
 def start_learning():
-    lh = _today_cards()
+    lh = get_cards_to_learn()
     session['lh'] = lh.serialize()
     start_form = StartLearningForm()
     clear_form = ClearLearningForm()
@@ -232,8 +232,9 @@ def learning():
     if isinstance(learn_date, str):
         learn_date = datetime.strptime(learn_date, date_fmt)
     lh = LearningHelper(num_random_learned, learn_date, deck_id)
-    if session.get('lh') is None:
-        today_cards()
+    if deck_id or not session.get('lh'):
+        lh = get_cards_to_learn(deck_id)
+        session['lh'] = lh.serialize()
     lh_dict = session['lh']
     lh.deserialize(lh_dict)
     card = lh.get_current_card()
