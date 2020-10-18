@@ -97,7 +97,7 @@ class User(UserMixin, db.Model):
     cards = db.relationship('Card', backref='user', lazy='dynamic')
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     notifications = db.relationship('Notification', backref='user',
-                                    lazy='dynamic')
+                                lazy='dynamic')
     tasks = db.relationship('Task', backref='user', lazy='dynamic')
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
@@ -239,8 +239,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     start_date = db.Column(db.DateTime, default=datetime.utcnow().date)
     next_date = db.Column(db.DateTime, index=True)
     bucket = db.Column(db.Integer)
-    example = db.Column(db.String(2048))
-    source = db.Column(db.String(2048))
     reverse_asking = db.Column(db.Boolean)
 
     def get_deck_name(self):
@@ -293,8 +291,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             'start_date': self.start_date,
             'next_date': self.next_date,
             'bucket': self.bucket,
-            'example': self.example,
-            'source': self.source,
             'reverse_asking': self.reverse_asking,
             "_links": {
                 "self": url_for("api.get_card", id=self.id)
@@ -304,8 +300,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     def from_dict(self, data):
         client_set_fields = ['front', 'back', 'user_id', 'deck_id', 'start_date',
-                             'next_date', 'bucket', 'example',
-                             'source', 'reverse_asking']
+                             'next_date', 'bucket', 'reverse_asking']
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])

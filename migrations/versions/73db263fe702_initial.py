@@ -79,8 +79,6 @@ def upgrade():
     sa.Column('start_date', sa.DateTime(), nullable=True),
     sa.Column('next_date', sa.DateTime(), nullable=True),
     sa.Column('bucket', sa.Integer(), nullable=True),
-    sa.Column('example', sa.String(length=2048), nullable=True),
-    sa.Column('source', sa.String(length=2048), nullable=True),
     sa.Column('reverse_asking', sa.Boolean(), nullable=True),
     sa.ForeignKeyConstraint(['deck_id'], ['deck.id'], name=op.f('fk_card_deck_id_deck')),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_card_user_id_user')),

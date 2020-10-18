@@ -28,10 +28,6 @@ class CardForm(FlaskForm):
                            format="%Y-%m-%d")
     bucket = SelectField('Bucket', default=1, coerce=int,
                          choices=list(zip(range(1,7), range(1,7))))
-    example = TextAreaField('Example', validators=[
-        Optional(), Length(min=1, max=2048)])
-    source = TextAreaField('Source', validators=[
-        Optional(), Length(min=1, max=2048)])
     reverse_asking = BooleanField('Reverse Asking', default=False)
     submit = SubmitField('Submit')
 

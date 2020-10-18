@@ -28,7 +28,6 @@ def index():
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
                     start_date=form.start_date.data, bucket=form.bucket.data,
-                    example=form.example.data, source=form.source.data,
                     reverse_asking=form.reverse_asking.data)
         card.set_next_date()
         db.session.add(card)
@@ -108,19 +107,6 @@ def export_cards():
         db.session.commit()
     return redirect(url_for('main.index'))
 
-@bp.route('/card/<card_id>', methods=['GET', 'POST'])
-@login_required
-def card_profile(card_id):
-    card = Card.query.get_or_404(card_id)
-    if current_user.id != card.user_id:
-        return redirect(url_for('main.index'))
-    form = DeleteCardForm()
-    if request.method == 'POST':
-        db.session.delete(card)
-        db.session.commit()
-        return redirect(url_for('main.index'))
-    return render_template('card_profile.html', card=card, form=form)
-
 @bp.route('/<deck_id>/create_card', methods=['GET', 'POST'])
 @login_required
 def create_card(deck_id):
@@ -133,7 +119,6 @@ def create_card(deck_id):
         card = Card(front=form.front.data, back=form.back.data,
                     deck_id=deck.id, user_id=current_user.id,
                     start_date=form.start_date.data, bucket=form.bucket.data,
-                    example=form.example.data, source=form.source.data,
                     reverse_asking=form.reverse_asking.data)
         card.set_next_date()
         db.session.add(card)
@@ -160,8 +145,6 @@ def edit_card(card_id):
         form.deck.data = card.deck.name
         form.start_date.data = card.start_date
         form.bucket.data = card.bucket
-        form.example.data = card.example
-        form.source.data = card.source
         form.reverse_asking.data = card.reverse_asking
         return render_template("edit_card.html", form=form, delete_form=delete_form, mode='edit')
     if request.form['mode'] == 'submit' and form.validate_on_submit():
@@ -177,8 +160,6 @@ def edit_card(card_id):
         card.timestamp = datetime.utcnow()
         card.start_date = form.start_date.data
         card.bucket = form.bucket.data
-        card.example = form.example.data
-        card.source = form.source.data
         card.reverse_asking = form.reverse_asking.data
         card.set_next_date()
         db.session.add(card)
