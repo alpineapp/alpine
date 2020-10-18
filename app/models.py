@@ -227,7 +227,7 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
 
 class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ['front', 'back']
-    MAX_CHAR_BACK = 150
+    MAX_CHAR_BACK = 350
     MAX_CHAR_FRONT = 60
     id = db.Column(db.Integer, primary_key=True)
     front = db.Column(db.String(500))
