@@ -1,5 +1,14 @@
 # Alpine Spaced Repetition Learing App
 
+## Set up
+For a new MacOS:
+```
+python3 -m venv alpine
+source ./alpine/bin/activate
+pip install --upgrade pip # to install pip version 20.2.4
+pip install -r requirements.txt
+```
+
 ## Test API
 ```
 # Get authorization token

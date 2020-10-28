@@ -77,7 +77,7 @@ services:
     image: alpine:latest
     command: >
       sh -c "
-      ./boot.sh 
+      ./boot.sh
       && ./work.sh"
     depends_on:
       - redis
@@ -100,7 +100,7 @@ services:
     build: .
     command: >
       sh -c "
-      ./boot.sh 
+      ./boot.sh
       && ./run.sh"
     ports:
       - 8000:5000

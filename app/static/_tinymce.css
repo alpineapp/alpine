@@ -1,0 +1,5 @@
+.tinymce-display {
+    text-overflow: ellipsis;
+    overflow: scroll;
+    white-space: normal;
+}
