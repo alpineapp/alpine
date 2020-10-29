@@ -20,8 +20,10 @@ class SearchForm(FlaskForm):
 class CardForm(FlaskForm):
     front = TextAreaField('Definition', validators=[
         DataRequired(), Length(min=1, max=500)])
+    # Have to remove the DataRequired to make the form work with TinyMCE
+    # https://stackoverflow.com/questions/48838175/tinymce-an-invalid-form-control-with-name-content-is-not-focusable?noredirect=1&lq=1
     back = TextAreaField('Explanation', validators=[
-        DataRequired(), Length(min=1, max=1000)])
+        Length(min=1, max=1000)])
     deck = StringField('Deck', validators=[DataRequired(),
                                            Length(min=1, max=256)])
     start_date = DateField('Start Date', validators=[Optional()],
