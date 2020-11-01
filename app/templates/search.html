@@ -2,29 +2,23 @@
 
 {% block app_content %}
     <h3> Search results </h3>
-    <table class="table table-hover">
-        <tr>
-            <th>Definition</th>
-            <th>Explanation</th>
-            <th>Created at</th>
-            <th></th>
-        </tr>
-        {% for card in cards %}
-            {% include '_card.html' %}
-        {% endfor %}
-    </table>
+    <div class="album py-2">
+        <div class="row">
+            {% for card in cards %}
+            {% include 'card.html' %}
+            {% endfor %}
+        </div>
+    </div>
     <nav aria-label="...">
-        <ul class="pager">
-            <li class="previous{% if not prev_url %} disabled{% endif %}">
-                <a href="{{ prev_url or '#' }}">
-                    <span aria-hidden="true">&larr;</span>
-                    {{ 'Previous results' }}
+        <ul class="pagination justify-content-center">
+            <li class="page-item{% if not prev_url %} disabled{% endif %}">
+                <a class="page-link small" href="{{ prev_url or '#' }}" tabindex="-1" aria-disabled="true">
+                    <span aria-hidden="true">&larr;</span> Newer cards
                 </a>
             </li>
-            <li class="next{% if not next_url %} disabled{% endif %}">
-                <a href="{{ next_url or '#' }}">
-                    {{ 'Next results' }}
-                    <span aria-hidden="true">&rarr;</span>
+            <li class="page-item{% if not next_url %} disabled{% endif %}">
+                <a class="page-link small" href="{{ next_url or '#' }}">
+                    Older cards <span aria-hidden="true">&rarr;</span>
                 </a>
             </li>
         </ul>

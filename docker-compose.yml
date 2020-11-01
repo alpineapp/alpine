@@ -24,29 +24,28 @@ services:
 
   # ----------------------------------------------
   # Elasticsearch Stack
-  # elasticsearch:
-  #   container_name: elasticsearch
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
-  #   environment:
-  #     - cluster.name=es-cluster
-  #     - cluster.routing.allocation.disk.threshold_enabled=false
-  #     - discovery.type=single-node
-  #     - bootstrap.memory_lock=true
-  #     - "ES_JAVA_OPTS=-XX:UseAVX=2 -Xms128M -Xmx128M"
-  #   ulimits:
-  #     memlock:
-  #       soft: -1
-  #       hard: -1
-  #   volumes:
-  #     # - elasticsearch-data:/usr/share/elasticsearch/data
-  #     - v-alpine-es:/usr/share/elasticsearch/data
-  #   networks:
-  #     - alpine-net
-  #   healthcheck:
-  #     interval: 20s
-  #     retries: 10
-  #     test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
-  #   restart: always
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+    environment:
+      - cluster.name=es-cluster
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-XX:UseAVX=2 -Xms128M -Xmx128M"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - v-alpine-es:/usr/share/elasticsearch/data
+    networks:
+      - alpine-net
+    healthcheck:
+      interval: 20s
+      retries: 10
+      test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+    restart: always
 
   # Kibana
   # kibana:
@@ -89,7 +88,7 @@ services:
     env_file:
       - .env
     environment:
-      # ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://elasticsearch:9200
       DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
     networks:
@@ -110,12 +109,12 @@ services:
       - 80:5000
     depends_on:
       - db
-      # - elasticsearch
+      - elasticsearch
       - redis
     env_file:
       - .env
     environment:
-      # ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_URL: http://elasticsearch:9200
       DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
     networks:
