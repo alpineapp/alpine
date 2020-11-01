@@ -20,6 +20,7 @@ services:
       - v-alpine-db:/var/lib/postgresql/data
     networks:
       - alpine-net
+    restart: always
 
   # ----------------------------------------------
   # Elasticsearch Stack
@@ -45,6 +46,7 @@ services:
   #     interval: 20s
   #     retries: 10
   #     test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
+  #   restart: always
 
   # Kibana
   # kibana:
@@ -63,6 +65,7 @@ services:
   #     interval: 10s
   #     retries: 20
   #     test: curl --write-out 'HTTP %{http_code}' --fail --silent --output /dev/null http://localhost:5602/api/status
+  #   restart: unless-stopped
 
   # ----------------------------------------------
   # Background worker
@@ -71,6 +74,7 @@ services:
     image: redis:6.0.6-alpine
     networks:
       - alpine-net
+    restart: always
 
   worker:
     container_name: worker
@@ -103,7 +107,7 @@ services:
       ./boot.sh
       && ./run.sh"
     ports:
-      - 8000:5000
+      - 80:5000
     depends_on:
       - db
       # - elasticsearch
