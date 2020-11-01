@@ -106,7 +106,7 @@ services:
       ./boot.sh
       && ./run.sh"
     ports:
-      - 80:5000
+      - 5000:5000
     depends_on:
       - db
       - elasticsearch
