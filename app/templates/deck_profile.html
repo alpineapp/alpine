@@ -11,9 +11,34 @@
         <p>
             <a href="{{ url_for('main.create_card', deck_id=deck.id) }}" class="col-sm-2 btn btn-outline-secondary m-1">Add card</a>
             <a href="{{ url_for('main.learning', deck_id=deck.id) }}" class="col-sm-2 btn btn-primary m-1">Learn</a>
+            <button type='button' class="col-sm-2 btn btn-danger m-1" data-toggle='modal' data-target='#deleteDeckModal'>
+                Delete deck
+            </button>
+            <a href="{{ url_for('main.edit_deck', deck_id=deck.id) }}" class="col-sm-2 btn btn-outline-secondary m-1">Edit deck</a>
         </p>
     </div>
 </section>
+
+<div id="deleteDeckModal" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure to delete this deck?</p>
+            </div>
+            <div class="modal-footer">
+                <form action="{{ url_for('main.delete_deck', deck_id=deck.id) }}">
+                    <button class="btn btn-danger" type="submit">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="album py-5">
     <div class="row">

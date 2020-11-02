@@ -8,7 +8,8 @@ from flask_login import current_user, login_user, logout_user, \
 from app import db
 from app.main import bp
 from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm, \
-                           StartLearningForm, ClearLearningForm, LearningForm
+                           StartLearningForm, ClearLearningForm, LearningForm, \
+                           DeckForm
 from app.models import User, Card, Notification, Deck
 from app.learning import LearningHelper
 
@@ -177,12 +178,50 @@ def deck_profile(deck_id):
     deck = Deck.query.get_or_404(deck_id)
     if current_user.id != deck.user_id:
         return redirect(url_for('main.index'))
-    form = DeleteCardForm()
-    if request.method == 'POST':
-        db.session.delete(deck)
+    edit_deck_form = DeckForm()
+    return render_template('deck_profile.html', deck=deck,
+                           edit_deck_form=edit_deck_form)
+
+@bp.route('/deck', methods=['GET', 'POST'])
+@login_required
+def deck():
+    edit_deck_form = DeckForm()
+    if edit_deck_form.validate_on_submit():
+        deck = Deck(name=edit_deck_form.name.data, description=edit_deck_form.description.data,
+                    user_id=current_user.id)
+        db.session.add(deck)
         db.session.commit()
+        flash('Your deck is added!')
+        return redirect(url_for('main.deck_profile', deck_id=deck.id))
+    return render_template("deck.html", edit_deck_form=edit_deck_form, user=current_user)
+
+@bp.route('/deck/edit_deck/<deck_id>', methods=['GET', 'POST'])
+@login_required
+def edit_deck(deck_id):
+    deck = Deck.query.get_or_404(deck_id)
+    if current_user.id != deck.user_id:
         return redirect(url_for('main.index'))
-    return render_template('deck_profile.html', deck=deck, form=form)
+    edit_deck_form = DeckForm()
+    if request.method == "GET":
+        edit_deck_form.name.data = deck.name
+        edit_deck_form.description.data = deck.description
+        return render_template("edit_deck.html", edit_deck_form=edit_deck_form)
+    if request.method == "POST" and edit_deck_form.validate_on_submit():
+        deck.name = edit_deck_form.name.data
+        deck.description = edit_deck_form.description.data
+        db.session.add(deck)
+        db.session.commit()
+        flash('Your deck is edited!')
+    return redirect(url_for('main.deck_profile', deck_id=deck.id))
+
+@bp.route('/deck/<deck_id>/delete_deck', methods=['GET', 'POST'])
+@login_required
+def delete_deck(deck_id):
+    form = DeckForm()
+    deck = Deck.query.get_or_404(deck_id)
+    db.session.delete(deck)
+    db.session.commit()
+    return render_template("deck.html", form=form, user=current_user)
 
 def get_cards_to_learn(deck_id=None):
     lh = LearningHelper(5, datetime.today(), deck_id=deck_id)
@@ -212,7 +251,7 @@ def start_learning():
     clear_form = ClearLearningForm()
     if start_form.validate_on_submit() and request.form['mode'] == 'start':
         return redirect(url_for('main.learning',
-                                num_random_learned=start_form.num_random_learned.data, 
+                                num_random_learned=start_form.num_random_learned.data,
                                 learn_date=start_form.learn_date.data,
                                 deck_id=None))
     elif clear_form.validate_on_submit() and request.form['mode'] == 'clear':

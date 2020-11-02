@@ -150,6 +150,10 @@ class User(UserMixin, db.Model):
         return Task.query.filter_by(name=name, user=self,
                                     complete=False).first()
 
+    def get_decks(self):
+        decks = self.decks.order_by(Deck.timestamp.desc()).all()
+        return decks
+
     def to_dict(self, include_email=False):
         data = {
             'id': self.id,
@@ -197,13 +201,21 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ['name']
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
+    description = db.Column(db.String(1024))
     timestamp = db.Column(db.DateTime, index=True,
                           default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    cards = db.relationship('Card', backref='deck', lazy='dynamic')
+    cards = db.relationship('Card', backref='deck', lazy='dynamic',
+                            cascade='all, delete-orphan')
 
     def __repr__(self):
         return '<Deck {}>'.format(self.name)
+
+    def preview_description(self):
+        if self.description:
+            return self.description
+        else:
+            return ""
 
     def to_dict(self):
         data = {
