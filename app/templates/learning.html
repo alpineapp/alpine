@@ -14,20 +14,21 @@
             </div>
         </div>
         <div class="row">
-            <h4>Deck {{ card.deck.name }}</h4>
+            <div><h4>Deck {{ card.deck.name }}</h4></div>
+            <div class="mr-auto"></div>
+            <div>
+                <p>Bucket <span class="badge badge-secondary">{{ card.bucket }}</span></p>
+            </div>
         </div>
         <div class='row'>
             <div class="card w-100">
                 <div class="card-body">
                     <p class="card-title">{{ card.front }}</p>
                 </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><p>Bucket <span class="badge badge-secondary">{{ card.bucket }}</span></p></li>
-                </ul>
-                <p class="card-body card-text tinymce-display small" style="display: none; background-color:rgb(245, 245, 245); height: 150px" id='displayTarget'></p>
+                <p class="card-body card-text tinymce-display small" style="display: none; background-color:rgb(245, 245, 245); height: 250px" id='displayTarget'></p>
             </div>
         </div>
-        <div id="backPlaceholder" class="row" style="height: 150px"></div>
+        <div id="backPlaceholder" class="row" style="height: 250px"></div>
     <div class="row mt-4">
         <div class="col mb-2">
             <a class="btn btn-outline-secondary btn-block" id="displayBtn" card_id="{{ card.id }}">Display</a>
