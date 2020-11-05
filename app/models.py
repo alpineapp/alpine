@@ -217,6 +217,9 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
         else:
             return ""
 
+    def get_cards(self):
+        return self.cards.order_by(Card.timestamp.desc()).all()
+
     def to_dict(self):
         data = {
             "id": self.id,
