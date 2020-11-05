@@ -179,8 +179,17 @@ def deck_profile(deck_id):
     if current_user.id != deck.user_id:
         return redirect(url_for('main.index'))
     edit_deck_form = DeckForm()
-    return render_template('deck_profile.html', deck=deck,
-                           edit_deck_form=edit_deck_form)
+    page = request.args.get('page', 1, type=int)
+    cards = deck.cards.order_by(Card.timestamp.desc()) \
+                      .paginate(page, current_app.config['CARDS_PER_PAGE'],
+                                False)
+    next_url = url_for('main.deck_profile', deck_id=deck.id, page=cards.next_num) \
+        if cards.has_next else None
+    prev_url = url_for('main.deck_profile', deck_id=deck.id, page=cards.prev_num) \
+        if cards.has_prev else None
+    return render_template('deck_profile.html', deck=deck, cards=cards.items,
+                           edit_deck_form=edit_deck_form,
+                           next_url=next_url, prev_url=prev_url)
 
 @bp.route('/deck', methods=['GET', 'POST'])
 @login_required

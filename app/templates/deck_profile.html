@@ -42,9 +42,10 @@
 
 <div class="album py-5">
     <div class="row">
-        {% for card in deck.get_cards() %}
+        {% for card in cards %}
         {% include 'card.html' %}
         {% endfor %}
     </div>
 </div>
+{% include '_pagination.html' %}
 {% endblock %}
