@@ -141,7 +141,8 @@
         $("#next").show();
         $("#ok").hide();
         if ($("#backPlaceholder").is(":visible")) {
-            displayBack($("#displayBtn"));
+            $("#backPlaceholder").toggle();
+            $("#displayTarget").toggle();
         }
         $("#displayBtn").hide();
     })
@@ -152,30 +153,32 @@
         $("#next").show();
         $("#ok").hide();
         if ($("#backPlaceholder").is(":visible")) {
-            displayBack($("#displayBtn"));
+            $("#backPlaceholder").toggle();
+            $("#displayTarget").toggle();
         }
         $("#displayBtn").hide();
     })
 
-    function displayBack(sourceElem) {
-        var card_id = sourceElem.attr("card_id");
-        var displayElem = $("#displayTarget");
-        displayElem.html('<img src="{{ url_for('static', filename='loading.gif') }}">');
-        $.post('/display_back', {
-            card_id: card_id
-        }).done(function(response) {
-            $("#backPlaceholder").hide();
-            displayElem.show();
-            displayElem.html(response['text']);
-        }).fail(function() {
-            $("#backPlaceholder").hide();
-            displayElem.show();
-            displayElem.html("{{ 'Error: Could not contact server.' }}");
-        });
+    if(window.location.pathname.includes('/learning')) {
+        $(function() {
+            var card_id = $("#cardContainer").attr('card_id');
+            var displayElem = $("#displayTarget");
+            $.post('/display_back', {
+                card_id: card_id
+            }).done(function(response) {
+                displayElem.html(response['text']);
+            }).fail(function() {
+                displayElem.html("{{ 'Error: Could not contact server.' }}");
+            });
+        })
     }
 
     $("#displayBtn").click(function() {
-        displayBack($(this));
+        $("#backPlaceholder").toggle();
+        $("#displayTarget").toggle();
+        $(this).text(function(i, text){
+          return text === "Display" ? "Hide" : "Display";
+      })
     })
 
     $('.tinymce-display').each(function() {

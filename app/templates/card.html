@@ -1,4 +1,4 @@
-<div class="col-md-4" id="card-{{ card.id }}" card-id='{{ card.id }}'>
+<div class="col-md-4" id="cardContainer" card_id='{{ card.id }}'>
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <h6 class="card-title" style="height: 30px"><a href="{{ url_for('main.edit_card', card_id=card.id) }}">{{ card.preview_front() }}</a></h6>
