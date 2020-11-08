@@ -254,7 +254,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     start_date = db.Column(db.DateTime, default=datetime.utcnow().date)
     next_date = db.Column(db.DateTime, index=True)
     bucket = db.Column(db.Integer)
-    reverse_asking = db.Column(db.Boolean)
 
     def get_deck_name(self):
         if self.deck_id:
@@ -309,7 +308,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             'start_date': self.start_date,
             'next_date': self.next_date,
             'bucket': self.bucket,
-            'reverse_asking': self.reverse_asking,
             "_links": {
                 "self": url_for("api.get_card", id=self.id)
             }
@@ -318,7 +316,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     def from_dict(self, data):
         client_set_fields = ['front', 'back', 'user_id', 'deck_id', 'start_date',
-                             'next_date', 'bucket', 'reverse_asking']
+                             'next_date', 'bucket']
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])

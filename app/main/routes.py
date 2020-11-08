@@ -28,8 +28,7 @@ def index():
             db.session.flush()
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
-                    start_date=form.start_date.data, bucket=form.bucket.data,
-                    reverse_asking=form.reverse_asking.data)
+                    start_date=form.start_date.data, bucket=form.bucket.data)
         card.set_next_date()
         db.session.add(card)
         db.session.commit()
@@ -119,8 +118,7 @@ def create_card(deck_id):
             return redirect(url_for('main.deck_profile', deck_id=deck.id))
         card = Card(front=form.front.data, back=form.back.data,
                     deck_id=deck.id, user_id=current_user.id,
-                    start_date=form.start_date.data, bucket=form.bucket.data,
-                    reverse_asking=form.reverse_asking.data)
+                    start_date=form.start_date.data, bucket=form.bucket.data)
         card.set_next_date()
         db.session.add(card)
         db.session.commit()
@@ -146,7 +144,6 @@ def edit_card(card_id):
         form.deck.data = card.deck.name
         form.start_date.data = card.start_date
         form.bucket.data = card.bucket
-        form.reverse_asking.data = card.reverse_asking
         return render_template("edit_card.html", form=form, delete_form=delete_form, mode='edit')
     if request.form['mode'] == 'submit' and form.validate_on_submit():
         deck_name = form.deck.data or "Unnamed"
@@ -161,7 +158,6 @@ def edit_card(card_id):
         card.timestamp = datetime.utcnow()
         card.start_date = form.start_date.data
         card.bucket = form.bucket.data
-        card.reverse_asking = form.reverse_asking.data
         card.set_next_date()
         db.session.add(card)
         db.session.commit()
