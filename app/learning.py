@@ -20,7 +20,9 @@ class LearningHelper:
             'num_minutes': None,
             'num_makeup': None,
             'num_fail': 0,
-            'num_ok': 0
+            'num_ok': 0,
+            'fail_cards': [],
+            'success_cards': []
         }
         self.cursor = 0
 
@@ -44,13 +46,18 @@ class LearningHelper:
 
     def handle_fail(self, card):
         self.stats['num_fail'] += 1
+        self.stats['fail_cards'].append(card.id)
 
     def handle_ok(self, card):
         self.stats['num_ok'] += 1
+        self.stats['success_cards'].append(card.id)
 
     def get_current_card(self):
         if self.cursor < len(self.cards):
             return self.cards[self.cursor]
+
+    def get_cards(self, type: str):
+        return [Card.query.get(card_id) for card_id in self.stats[f'{type}_cards']]
 
     def serialize(self):
         return {

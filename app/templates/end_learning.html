@@ -7,34 +7,56 @@
 <h3>Congratulations! You have completed today learning session.</h3>
 <h3>Here's the summary:</h3>
 <div class="row mt-3">
-    <div class="col-md-3 mb-lg-5 m-2">
+    <div class="col-md-3">
         <!-- Card -->
-        <div class="card card-hover-shadow h-100">
+        <div class="card card-hover-shadow h-100 button" data-toggle="collapse" href="#collapseSuccess" role="button" aria-expanded="false" aria-controls="collapseSuccess">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-secondary">Success</h6>
                 <div class="row align-items-center mb-1">
-                    <div class="col-12">
+                    <div class="col-10">
                         <span class="card-title h2 text-success">{{ lh.stats['num_ok'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                    <div style="opacity: 0.5;">
+                        {% include 'icons/arrow_square_down.html' %}
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Card -->
     </div>
-    <div class="col-md-3 mb-lg-5 m-2">
+</div>
+
+<div class='row mt-3 collapse' id="collapseSuccess">
+    {% for card in lh.get_cards('success') %}
+    {% include 'card.html' %}
+    {% endfor %}
+</div>
+
+<br>
+
+<div class="row mt-3">
+    <div class="col-md-3">
         <!-- Card -->
-        <div class="card card-hover-shadow h-100">
+        <div class="card card-hover-shadow h-100 button" data-toggle="collapse" href="#collapseFail" role="button" aria-expanded="false" aria-controls="collapseFail">
             <div class="card-body">
                 <h6 class="card-subtitle mb-2 text-secondary">Fail</h6>
                 <div class="row align-items-center mb-1">
-                    <div class="col-12">
+                    <div class="col-10">
                         <span class="card-title h2 text-danger">{{ lh.stats['num_fail'] }}</span><span class='text-secondary'> cards</span>
+                    </div>
+                    <div style="opacity: 0.5;">
+                        {% include 'icons/arrow_square_down.html' %}
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Card -->
     </div>
 </div>
+
+<div class='row mt-3 collapse' id="collapseFail">
+    {% for card in lh.get_cards('fail') %}
+    {% include 'card.html' %}
+    {% endfor %}
+</div>
+
 {% endif %}
 {% endblock %}
