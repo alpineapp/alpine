@@ -26,7 +26,7 @@ class CardForm(FlaskForm):
         Length(min=1, max=1000)])
     deck = StringField('Deck', validators=[DataRequired(),
                                            Length(min=1, max=256)])
-    start_date = DateField('Start Date', validators=[Optional()],
+    next_date = DateField('Next Learn Date', validators=[Optional()],
                            format="%Y-%m-%d")
     bucket = SelectField('Bucket', default=1, coerce=int,
                          choices=list(zip(range(1,7), range(1,7))))

@@ -28,15 +28,14 @@ def index():
             db.session.flush()
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
-                    start_date=form.start_date.data,
-                    next_date=form.start_date.data,
+                    next_date=form.next_date.data,
                     bucket=form.bucket.data)
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
         return redirect(url_for('main.index'))
     elif request.method == 'GET':
-        form.start_date.data = datetime.today()
+        form.next_date.data = datetime.today()
     page = request.args.get('page', 1, type=int)
     cards = current_user.cards.order_by(Card.timestamp.desc()) \
                               .paginate(page, current_app.config['CARDS_PER_PAGE'],
@@ -119,15 +118,14 @@ def create_card(deck_id):
             return redirect(url_for('main.deck_profile', deck_id=deck.id))
         card = Card(front=form.front.data, back=form.back.data,
                     deck_id=deck.id, user_id=current_user.id,
-                    start_date=form.start_date.data,
-                    next_date=form.start_date.data,
+                    next_date=form.next_date.data,
                     bucket=form.bucket.data)
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
         return redirect(url_for('main.deck_profile', deck_id=deck.id))
     elif request.method == 'GET':
-        form.start_date.data = datetime.today()
+        form.next_date.data = datetime.today()
         form.deck.data = deck.name
     return render_template('create_card.html', form=form)
 
@@ -143,7 +141,7 @@ def edit_card(card_id):
         form.front.data = card.front
         form.back.data = card.back
         form.deck.data = card.deck.name
-        form.start_date.data = card.start_date
+        form.next_date.data = card.next_date
         form.bucket.data = card.bucket
         return render_template("edit_card.html", card=card, form=form, mode='edit')
     if request.form['mode'] == 'submit' and form.validate_on_submit():
@@ -157,8 +155,7 @@ def edit_card(card_id):
         card.back = form.back.data
         card.deck_id = deck.id
         card.timestamp = datetime.utcnow()
-        card.start_date = form.start_date.data
-        card.next_date = form.start_date.data
+        card.next_date = form.next_date.data
         card.bucket = form.bucket.data
         db.session.add(card)
         db.session.commit()

@@ -251,7 +251,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
                           default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     deck_id = db.Column(db.Integer, db.ForeignKey('deck.id'))
-    start_date = db.Column(db.DateTime, default=datetime.utcnow().date)
     next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
 
@@ -281,7 +280,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             return
         plus_next_day = self._get_day_from_bucket(self.bucket)
         if plus_next_day is not None:
-            # If mark-up card then set next date based on today
+            # If mark-up card then set next learn date based on today
             _date = max(self.next_date.date(), datetime.utcnow().date())
             self.next_date = _date + timedelta(days=plus_next_day)
         else:
@@ -289,8 +288,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     def handle_fail(self):
         self.bucket = max(1, self.bucket - 1)
-        self.start_date = datetime.utcnow().date()
-        self.set_next_date()
+        self.next_date = datetime.utcnow().date()
 
     def handle_ok(self):
         self.bucket = min(6, self.bucket + 1)
@@ -307,7 +305,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            'start_date': self.start_date,
             'next_date': self.next_date,
             'bucket': self.bucket,
             "_links": {
@@ -317,7 +314,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         return data
 
     def from_dict(self, data):
-        client_set_fields = ['front', 'back', 'user_id', 'deck_id', 'start_date',
+        client_set_fields = ['front', 'back', 'user_id', 'deck_id',
                              'next_date', 'bucket']
         for field in client_set_fields:
             if field in data:
@@ -326,7 +323,9 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     @staticmethod
     def _get_day_from_bucket(bucket):
-        if bucket <= 3:
+        if bucket <= 0:
+            return 0
+        elif bucket <= 3:
             return 1
         elif bucket <= 5:
             return 2
