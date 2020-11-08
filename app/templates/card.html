@@ -6,14 +6,17 @@
             <div class="d-flex justify-content-between align-items-center">
                 {% if deck is not defined %}
                 <div class="btn-group">
-                    <a type="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}">{{ card.deck.name }}</a>
+                    <a type="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}">
+                        {% include 'icons/deck.html' %}
+                        {{ card.deck.name }}
+                    </a>
                 </div>
                 {% endif %}
                 <div class='mr-auto'></div>
-                <small class="text-muted mr-3">Bucket {{ card.bucket }}</small>
                 {% if card.next_date %}
-                <small class="text-muted">{{ card.next_date.strftime('%Y-%m-%d') }}</small>
+                <small class="text-muted mr-3">{{ card.next_date.strftime('%Y-%m-%d') }}</small>
                 {% endif %}
+                <small class="text-muted">{% include 'icons/bucket.html' %} {{ card.bucket }}</small>
             </div>
         </div>
     </div>

@@ -14,15 +14,16 @@
             </div>
         </div>
         <div class="row">
-            <h5>Deck
+            <h5>
                 <a type="button" class="btn btn-sm btn-outline-primary"
                     href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}">
+                    {% include 'icons/deck.html' %}
                     {{ card.deck.name }}
                 </a>
             </h5>
             <div class="mr-auto"></div>
             <div>
-                <p>Bucket <span class="badge badge-secondary">{{ card.bucket }}</span></p>
+                <p>{% include 'icons/bucket.html' %} {{ card.bucket }}</p>
             </div>
         </div>
         <div class='row mt-2'>
