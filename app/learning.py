@@ -2,7 +2,7 @@ from flask_login import current_user
 
 from app.models import Card
 
-AVG_CARD_DURATION_IN_SEC = 30
+AVG_CARD_DURATION_IN_SEC = 60
 
 class LearningHelper:
     def __init__(self, num_random_learned, learn_date, deck_id=None):
