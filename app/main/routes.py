@@ -28,8 +28,9 @@ def index():
             db.session.flush()
         card = Card(front=form.front.data, back=form.back.data,
                     user_id=current_user.id, deck_id=deck.id,
-                    start_date=form.start_date.data, bucket=form.bucket.data)
-        card.set_next_date()
+                    start_date=form.start_date.data,
+                    next_date=form.start_date.data,
+                    bucket=form.bucket.data)
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
@@ -118,8 +119,9 @@ def create_card(deck_id):
             return redirect(url_for('main.deck_profile', deck_id=deck.id))
         card = Card(front=form.front.data, back=form.back.data,
                     deck_id=deck.id, user_id=current_user.id,
-                    start_date=form.start_date.data, bucket=form.bucket.data)
-        card.set_next_date()
+                    start_date=form.start_date.data,
+                    next_date=form.start_date.data,
+                    bucket=form.bucket.data)
         db.session.add(card)
         db.session.commit()
         flash('Your card is added!')
@@ -157,8 +159,8 @@ def edit_card(card_id):
         card.deck_id = deck.id
         card.timestamp = datetime.utcnow()
         card.start_date = form.start_date.data
+        card.next_date = form.start_date.data
         card.bucket = form.bucket.data
-        card.set_next_date()
         db.session.add(card)
         db.session.commit()
         flash('Your card is edited!')

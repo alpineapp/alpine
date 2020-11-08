@@ -252,7 +252,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     deck_id = db.Column(db.Integer, db.ForeignKey('deck.id'))
     start_date = db.Column(db.DateTime, default=datetime.utcnow().date)
-    next_date = db.Column(db.DateTime, index=True)
+    next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
 
     def get_deck_name(self):
@@ -281,7 +281,9 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             return
         plus_next_day = self._get_day_from_bucket(self.bucket)
         if plus_next_day is not None:
-            self.next_date = self.start_date + timedelta(days=plus_next_day)
+            # If mark-up card then set next date based on today
+            _date = max(self.next_date.date(), datetime.utcnow().date())
+            self.next_date = _date + timedelta(days=plus_next_day)
         else:
             self.next_date = None
 
@@ -324,16 +326,10 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 
     @staticmethod
     def _get_day_from_bucket(bucket):
-        if bucket <= 1:
-            return 0
-        elif bucket == 2:
+        if bucket <= 3:
             return 1
-        elif bucket == 3:
+        elif bucket <= 5:
             return 2
-        elif bucket == 4:
-            return 4
-        elif bucket == 5:
-            return 6
 
 
 class Notification(db.Model):
