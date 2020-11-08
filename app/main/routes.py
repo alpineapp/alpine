@@ -251,9 +251,9 @@ def today_cards():
         lh = session.get('lh')
         return lh['stats']
 
-@bp.route('/start_learning', methods=['GET', 'POST'])
+@bp.route('/before_learning', methods=['GET', 'POST'])
 @login_required
-def start_learning():
+def before_learning():
     lh = get_cards_to_learn()
     session['lh'] = lh.serialize()
     start_form = StartLearningForm()
@@ -267,7 +267,7 @@ def start_learning():
         session['lh'] = None
         return redirect(url_for('main.index'))
     start_form.learn_date.data = datetime.today()
-    return render_template("start_learning.html", start_form=start_form,
+    return render_template("before_learning.html", start_form=start_form,
                            clear_form=clear_form, lh_stats=lh.stats)
 
 @bp.route('/learning', methods=['GET', 'POST'])
