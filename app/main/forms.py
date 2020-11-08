@@ -52,7 +52,7 @@ class DeleteCardForm(FlaskForm):
     submit = SubmitField('Delete')
 
 
-class StartLearningForm(FlaskForm):
+class BeforeLearningForm(FlaskForm):
     num_random_learned = IntegerField('Relearn',
                                       default=5)
     learn_date = DateField('Target Date', format="%Y-%m-%d")

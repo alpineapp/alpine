@@ -8,7 +8,7 @@ from flask_login import current_user, login_user, logout_user, \
 from app import db
 from app.main import bp
 from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm, \
-                           StartLearningForm, ClearLearningForm, LearningForm, \
+                           BeforeLearningForm, ClearLearningForm, LearningForm, \
                            DeckForm
 from app.models import User, Card, Notification, Deck
 from app.learning import LearningHelper
@@ -232,8 +232,10 @@ def delete_deck(deck_id):
     db.session.commit()
     return render_template("deck.html", form=form, user=current_user)
 
-def get_cards_to_learn(deck_id=None):
-    lh = LearningHelper(5, datetime.today(), deck_id=deck_id)
+def get_cards_to_learn(deck_id=None, learn_date=None, num_random=5):
+    if learn_date is None:
+        learn_date = datetime.today()
+    lh = LearningHelper(num_random, learn_date, deck_id=deck_id)
     lh.collect_tasks_makeup()
     lh.collect_tasks_today()
     lh.collect_random_learned()
@@ -256,7 +258,7 @@ def today_cards():
 def before_learning():
     lh = get_cards_to_learn()
     session['lh'] = lh.serialize()
-    start_form = StartLearningForm()
+    start_form = BeforeLearningForm()
     clear_form = ClearLearningForm()
     if start_form.validate_on_submit() and request.form['mode'] == 'start':
         return redirect(url_for('main.learning',
@@ -281,7 +283,7 @@ def learning():
         learn_date = datetime.strptime(learn_date, date_fmt)
     lh = LearningHelper(num_random_learned, learn_date, deck_id)
     if deck_id or not session.get('lh'):
-        lh = get_cards_to_learn(deck_id)
+        lh = get_cards_to_learn(deck_id, learn_date, num_random_learned)
         session['lh'] = lh.serialize()
     lh_dict = session['lh']
     lh.deserialize(lh_dict)
