@@ -7,7 +7,7 @@ from flask_login import current_user, login_user, logout_user, \
 
 from app import db
 from app.main import bp
-from app.main.forms import CardForm, SearchForm, EmptyForm, DeleteCardForm, \
+from app.main.forms import CardForm, SearchForm, EmptyForm, \
                            BeforeLearningForm, ClearLearningForm, LearningForm, \
                            DeckForm
 from app.models import User, Card, Notification, Deck
@@ -139,14 +139,13 @@ def edit_card(card_id):
     if current_user.id != card.user_id:
         return redirect(url_for('main.index'))
     form = CardForm()
-    delete_form = DeleteCardForm()
     if request.method == "GET":
         form.front.data = card.front
         form.back.data = card.back
         form.deck.data = card.deck.name
         form.start_date.data = card.start_date
         form.bucket.data = card.bucket
-        return render_template("edit_card.html", form=form, delete_form=delete_form, mode='edit')
+        return render_template("edit_card.html", card=card, form=form, mode='edit')
     if request.form['mode'] == 'submit' and form.validate_on_submit():
         deck_name = form.deck.data or "Unnamed"
         deck = current_user.decks.filter_by(name=deck_name).first()
@@ -164,11 +163,16 @@ def edit_card(card_id):
         db.session.add(card)
         db.session.commit()
         flash('Your card is edited!')
-    elif request.form['mode'] == 'delete':
-        db.session.delete(card)
-        db.session.commit()
-        flash('Your card is deleted!')
     return redirect(url_for('main.deck_profile', deck_id=deck.id))
+
+@bp.route('/card/<card_id>/delete_card', methods=['GET', 'POST'])
+@login_required
+def delete_card(card_id):
+    card = Card.query.get_or_404(card_id)
+    deck_id = card.deck_id
+    db.session.delete(card)
+    db.session.commit()
+    return redirect(url_for('main.deck_profile', deck_id=deck_id))
 
 @bp.route('/deck/<deck_id>', methods=['GET', 'POST'])
 @login_required

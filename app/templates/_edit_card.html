@@ -58,10 +58,8 @@
                 <p>Are you sure to delete this card?</p>
             </div>
             <div class="modal-footer">
-                <form action="" method="post">
-                    <input id="deleteModal" type="hidden" name="mode" value="delete">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    {{ delete_form.submit(class='btn btn-danger') }}
+                <form action="{{ url_for('main.delete_card', card_id=card.id) }}">
+                    <button class="btn btn-danger" type="submit">Delete</button>
                 </form>
             </div>
         </div>

@@ -47,10 +47,6 @@ class EmptyForm(FlaskForm):
     submit = SubmitField('Submit')
 
 
-class DeleteCardForm(FlaskForm):
-    submit = SubmitField('Delete')
-
-
 class BeforeLearningForm(FlaskForm):
     num_random_learned = IntegerField('Relearn',
                                       default=5)
