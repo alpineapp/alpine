@@ -3,6 +3,7 @@ from time import time
 import json
 import base64
 import os
+import re
 
 from werkzeug.security import generate_password_hash, \
                               check_password_hash
@@ -329,6 +330,19 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             return 1
         elif bucket <= 5:
             return 2
+
+    @staticmethod
+    def delete_card_img(back: str):
+        # Locate
+        link = re.compile("""src=[\"\'](.+?)[\"\']""")
+
+        links = link.finditer(back)
+        for l in links:
+            full_path = l.group(1)
+            filename = full_path.split('/')[-1]
+            filepath = os.path.join('app', current_app.config['UPLOAD_PATH'], filename)
+            # Delete
+            os.remove(filepath)
 
 
 class Notification(db.Model):

@@ -27,3 +27,7 @@ class Config(object):
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
     # Redis
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
+    # Uploaded images
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 5 # 5 MB
+    UPLOAD_EXTENSIONS = ['.jpg', '.png', '.gif']
+    UPLOAD_PATH = 'static/uploads'

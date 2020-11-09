@@ -48,3 +48,4 @@ app.db
 alpine.log*
 data/
 .env
+**/uploads

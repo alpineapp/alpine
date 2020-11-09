@@ -1,7 +1,12 @@
 from datetime import datetime
+import os
+import imghdr
+
 from flask import render_template, flash, redirect, url_for, \
-                  request, jsonify, current_app, g, session
+                  request, jsonify, current_app, g, session, \
+                  abort
 from werkzeug.urls import url_parse
+from werkzeug.utils import secure_filename
 from flask_login import current_user, login_user, logout_user, \
                         login_required
 
@@ -13,6 +18,34 @@ from app.main.forms import CardForm, SearchForm, EmptyForm, \
 from app.models import User, Card, Notification, Deck
 from app.learning import LearningHelper
 
+
+def validate_image(stream):
+    header = stream.read(512)
+    stream.seek(0)
+    format = imghdr.what(None, header)
+    if not format:
+        return None
+    return '.' + (format if format != 'jpeg' else 'jpg')
+
+@bp.route('/upload_image', methods=['POST'])
+def upload_image():
+    uploaded_file = request.files['file']
+    filename = secure_filename(uploaded_file.filename)
+    if filename != '':
+        file_ext = os.path.splitext(filename)[1]
+        if file_ext not in current_app.config['UPLOAD_EXTENSIONS'] or \
+                file_ext != validate_image(uploaded_file.stream):
+            abort(400)
+        ts_now_ms = int(datetime.utcnow().timestamp() * 1000)
+        _fn = os.path.splitext(filename)[0]
+        _ext = os.path.splitext(filename)[1]
+        filename_new = f"{_fn}_{ts_now_ms}{_ext}"
+        file_location = os.path.join('app',
+                                     current_app.config['UPLOAD_PATH'],
+                                     filename_new)
+        uploaded_file.save(file_location)
+    res = { 'location': f'{current_app.config["UPLOAD_PATH"]}/{filename_new}' }
+    return res
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
@@ -167,6 +200,8 @@ def edit_card(card_id):
 def delete_card(card_id):
     card = Card.query.get_or_404(card_id)
     deck_id = card.deck_id
+    if '<img src=' in card.back and current_app.config['UPLOAD_PATH'] in card.back:
+        Card.delete_card_img(card.back)
     db.session.delete(card)
     db.session.commit()
     return redirect(url_for('main.deck_profile', deck_id=deck_id))
@@ -227,6 +262,9 @@ def edit_deck(deck_id):
 def delete_deck(deck_id):
     edit_deck_form = DeckForm()
     deck = Deck.query.get_or_404(deck_id)
+    for card in deck.cards:
+        if '<img src=' in card.back and current_app.config['UPLOAD_PATH'] in card.back:
+            Card.delete_card_img(card.back)
     db.session.delete(deck)
     db.session.commit()
     return render_template("deck.html", edit_deck_form=edit_deck_form, user=current_user)
