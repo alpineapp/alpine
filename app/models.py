@@ -260,13 +260,10 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             deck_name = Deck.query.get(self.deck_id).name
             return deck_name
 
-    def display_back(self):
+    def preview_back(self):
         if len(self.back) > self.MAX_CHAR_BACK:
             display_str = f"{self.back[:self.MAX_CHAR_BACK]}..."
             return display_str
-        return self.back
-
-    def display_back(self):
         return self.back
 
     def preview_front(self):

@@ -16,6 +16,7 @@
         <title>{% block title %}{% endblock %}</title>
         <script src="https://cdn.tiny.cloud/1/{{ 'TINYMCE_API_KEY' | get_env }}/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
         <script type="text/javascript" src="{{url_for('static', filename='tinymce_init.js')}}"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='clamp.js')}}"></script>
         {% endblock %}
     </head>
     <body>

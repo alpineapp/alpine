@@ -2,8 +2,8 @@
     <div class="card mb-4 shadow-sm">
         <div class="card-body">
             <div class='row'>
-                <div class='col-lg-10'>
-                    <h6 class="card-title" style="height: 30px">{{ card.preview_front() }}</h6>
+                <div class='col-sm-11'>
+                    <h6 class="card-title truncate-overflow" style="height: calc(var(--lh) * 2)">{{ card.front }}</h6>
                 </div>
                 <div class='mr-auto'></div>
                 <div class='col-sm-1 m-0 p-0 btn-group dropright'>
@@ -16,7 +16,7 @@
                       </div>
                 </div>
             </div>
-            <p class="card-text tinymce-display small" style="height: 150px">{{ card.display_back() }}</p>
+            <p class="card-text tinymce-display small" style="height: 150px">{{ card.back }}</p>
             <div class="d-flex justify-content-between align-items-center">
                 {% if deck is not defined %}
                 <div class="btn-group">

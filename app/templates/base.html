@@ -88,7 +88,60 @@
 {{ moment.include_moment() }}
 
 <script>
-    // $(document).ready(function() {
+    $(document).ready(function() {
+
+        $(".truncate-overflow").each(function(index, element) {
+            // Truncate to only 2 lines
+            $clamp(element, { clamp: 2 });
+        });
+
+        // For learning session JS utilities
+        $("#fail").click(function() {
+            $("#fail").hide();
+            $("#nextInput").val("fail");
+            $("#next").show();
+            $("#ok").hide();
+            if ($("#backPlaceholder").is(":visible")) {
+                $("#backPlaceholder").toggle();
+                $("#displayTarget").toggle();
+            }
+            $("#displayBtn").hide();
+        })
+
+        $("#ok").click(function() {
+            $("#fail").hide();
+            $("#nextInput").val("ok");
+            $("#next").show();
+            $("#ok").hide();
+            if ($("#backPlaceholder").is(":visible")) {
+                $("#backPlaceholder").toggle();
+                $("#displayTarget").toggle();
+            }
+            $("#displayBtn").hide();
+        })
+
+        if(window.location.pathname.includes('/learning')) {
+            $(function() {
+                var card_id = $("#cardContainer").attr('card_id');
+                var displayElem = $("#displayTarget");
+                $.post('/display_back', {
+                    card_id: card_id
+                }).done(function(response) {
+                    displayElem.html(response['text']);
+                }).fail(function() {
+                    displayElem.html("{{ 'Error: Could not contact server.' }}");
+                });
+            })
+        }
+
+        $("#displayBtn").click(function() {
+            $("#backPlaceholder").toggle();
+            $("#displayTarget").toggle();
+            $(this).text(function(i, text){
+                return text === "Display" ? "Hide" : "Display";
+            })
+        })
+
     //     // executes when HTML-Document is loaded and DOM is ready
     //     console.log("document is ready");
 
@@ -100,7 +153,12 @@
     //         }
     //     );
     //     // document ready
-    // });
+    });
+
+    $('.tinymce-display').each(function() {
+        var content = $(this).text();
+        $(this).html(content);
+    });
 
     $(function () {
         $('[data-toggle="popover"]').popover()
@@ -147,57 +205,5 @@
     function set_task_progress(task_id, progress) {
         $('#' + task_id + '-progress').text(progress);
     }
-
-    // For learning session JS utilities
-    $("#fail").click(function() {
-        $("#fail").hide();
-        $("#nextInput").val("fail");
-        $("#next").show();
-        $("#ok").hide();
-        if ($("#backPlaceholder").is(":visible")) {
-            $("#backPlaceholder").toggle();
-            $("#displayTarget").toggle();
-        }
-        $("#displayBtn").hide();
-    })
-
-    $("#ok").click(function() {
-        $("#fail").hide();
-        $("#nextInput").val("ok");
-        $("#next").show();
-        $("#ok").hide();
-        if ($("#backPlaceholder").is(":visible")) {
-            $("#backPlaceholder").toggle();
-            $("#displayTarget").toggle();
-        }
-        $("#displayBtn").hide();
-    })
-
-    if(window.location.pathname.includes('/learning')) {
-        $(function() {
-            var card_id = $("#cardContainer").attr('card_id');
-            var displayElem = $("#displayTarget");
-            $.post('/display_back', {
-                card_id: card_id
-            }).done(function(response) {
-                displayElem.html(response['text']);
-            }).fail(function() {
-                displayElem.html("{{ 'Error: Could not contact server.' }}");
-            });
-        })
-    }
-
-    $("#displayBtn").click(function() {
-        $("#backPlaceholder").toggle();
-        $("#displayTarget").toggle();
-        $(this).text(function(i, text){
-          return text === "Display" ? "Hide" : "Display";
-      })
-    })
-
-    $('.tinymce-display').each(function() {
-        var content = $(this).text();
-        $(this).html(content);
-    });
 </script>
 {% endblock %}
