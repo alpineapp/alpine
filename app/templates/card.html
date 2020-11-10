@@ -20,7 +20,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 {% if deck is not defined %}
                 <div class="btn-group">
-                    <a type="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}">
+                    <a type="button" class="btn btn-sm btn-outline-dark" href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}">
                         {% include 'icons/deck.html' %}
                         {{ card.deck.name }}
                     </a>
