@@ -23,15 +23,15 @@
             </span>
         {% endif %}
     </a>
-    <a class='btn btn-primary mr-3' href="{{ url_for('main.deck') }}">
-        {% include 'icons/deck.html' %}
-        My Decks
-    </a>
     {% endif %}
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <a class='btn btn-primary mr-3' href="{{ url_for('main.deck') }}">
+            {% include 'icons/deck.html' %}
+            My Decks
+        </a>
         {% if g.search_form %}
         <div class='navbar-nav'>
             <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('main.search') }}">
