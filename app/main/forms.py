@@ -39,7 +39,7 @@ class DeckForm(FlaskForm):
     # Have to remove the DataRequired to make the form work with TinyMCE
     # https://stackoverflow.com/questions/48838175/tinymce-an-invalid-form-control-with-name-content-is-not-focusable?noredirect=1&lq=1
     description = TextAreaField('Description', validators=[
-        Length(min=1, max=1000)])
+        Length(min=0, max=1000)])
     submit = SubmitField('Submit')
 
 

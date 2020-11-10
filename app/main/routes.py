@@ -260,14 +260,16 @@ def edit_deck(deck_id):
 @bp.route('/deck/<deck_id>/delete_deck', methods=['GET', 'POST'])
 @login_required
 def delete_deck(deck_id):
-    edit_deck_form = DeckForm()
     deck = Deck.query.get_or_404(deck_id)
     for card in deck.cards:
         if '<img src=' in card.back and current_app.config['UPLOAD_PATH'] in card.back:
             Card.delete_card_img(card.back)
     db.session.delete(deck)
     db.session.commit()
-    return render_template("deck.html", edit_deck_form=edit_deck_form, user=current_user)
+    if current_user.decks.count() > 0:
+        return redirect(url_for('main.deck'))
+    else:
+        return redirect(url_for('main.index'))
 
 def get_cards_to_learn(deck_id=None, learn_date=None, num_random=5):
     if learn_date is None:
