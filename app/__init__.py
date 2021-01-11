@@ -10,6 +10,7 @@ import os
 from flask_mail import Mail
 from flask_bootstrap import Bootstrap
 from flask_moment import Moment
+from flask_cors import CORS
 from elasticsearch import Elasticsearch
 from redis import Redis
 import rq
@@ -31,6 +32,7 @@ moment = Moment()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
+    CORS(app)
     app.config.from_object(Config)
 
     db.init_app(app)
