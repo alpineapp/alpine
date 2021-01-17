@@ -14,7 +14,6 @@ RUN python -m venv alpine
 RUN alpine/bin/pip install -r requirements.txt
 RUN alpine/bin/pip install gunicorn psycopg2
 
-COPY app app
 COPY migrations migrations
 COPY alpine.py config.py boot.sh work.sh run.sh ./
 RUN chmod +x boot.sh work.sh run.sh

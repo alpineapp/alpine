@@ -106,6 +106,8 @@ services:
     container_name: alpine
     image: alpine:latest
     build: .
+    volumes:
+      - ./app:/home/alpine/app
     command: >
       sh -c "
       ./boot.sh
@@ -122,6 +124,7 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
+      ENV: ${ENV}
     networks:
       - alpine-net
     restart: always
