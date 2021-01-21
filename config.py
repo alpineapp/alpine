@@ -18,7 +18,7 @@ class Config(object):
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    ADMINS = ['prinskyen@gmail.com']
+    ADMINS = ['binhalpine@gmail.com'] #TBU when gmail domain is ready
     # Pagination
     CARDS_PER_PAGE = 6
     # Full-text search
