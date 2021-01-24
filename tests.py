@@ -6,7 +6,7 @@ from config import Config
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
 
 
 class UserModelCase(unittest.TestCase):
@@ -22,17 +22,22 @@ class UserModelCase(unittest.TestCase):
         self.app_context.pop()
 
     def test_password_hashing(self):
-        u = User(username='susan')
-        u.set_password('cat')
-        self.assertFalse(u.check_password('dog'))
-        self.assertTrue(u.check_password('cat'))
+        u = User(username="susan")
+        u.set_password("cat")
+        self.assertFalse(u.check_password("dog"))
+        self.assertTrue(u.check_password("cat"))
 
     def test_avatar(self):
-        u = User(username='john', email='john@example.com')
-        self.assertEqual(u.avatar(128), ('https://www.gravatar.com/avatar/'
-                                         'd4c74594d841139328695756648b6bd6'
-                                         '?d=robohash&s=128'))
+        u = User(username="john", email="john@example.com")
+        self.assertEqual(
+            u.avatar(128),
+            (
+                "https://www.gravatar.com/avatar/"
+                "d4c74594d841139328695756648b6bd6"
+                "?d=robohash&s=128"
+            ),
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main(verbosity=2)

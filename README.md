@@ -14,7 +14,7 @@ Please use flake8 as your linter.
 VS Code setting:
 ```
     "python.linting.flake8Args": [
-        "--ignore=E402,E501,E128",
+        "--ignore=E402,E501,E128,W503,W504",
     ],
     "python.linting.ignorePatterns": [
         ".vscode/*.py",

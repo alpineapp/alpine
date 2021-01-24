@@ -53,3 +53,4 @@ Werkzeug==1.0.1
 wrapt==1.12.1
 WTForms==2.3.1
 flake8==3.8.4
+black==20.8b1

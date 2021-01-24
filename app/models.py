@@ -5,8 +5,7 @@ import base64
 import os
 import re
 
-from werkzeug.security import generate_password_hash, \
-                              check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import current_app, url_for
 from flask_login import UserMixin, current_user
 from hashlib import md5
@@ -29,27 +28,30 @@ class SearchableMixin(object):
         when = []
         for i in range(len(ids)):
             when.append((ids[i], i))
-        return cls.query.filter(cls.id.in_(ids)) \
-                        .filter(cls.user_id == current_user.id) \
-                        .order_by(db.case(when, value=cls.id)), total
+        return (
+            cls.query.filter(cls.id.in_(ids))
+            .filter(cls.user_id == current_user.id)
+            .order_by(db.case(when, value=cls.id)),
+            total,
+        )
 
     @classmethod
     def before_commit(cls, session):
         session._changes = {
-            'add': list(session.new),
-            'update': list(session.dirty),
-            'delete': list(session.deleted)
+            "add": list(session.new),
+            "update": list(session.dirty),
+            "delete": list(session.deleted),
         }
 
     @classmethod
     def after_commit(cls, session):
-        for obj in session._changes['add']:
+        for obj in session._changes["add"]:
             if isinstance(obj, SearchableMixin):
                 add_to_index(obj.__tablename__, obj)
-        for obj in session._changes['update']:
+        for obj in session._changes["update"]:
             if isinstance(obj, SearchableMixin):
                 add_to_index(obj.__tablename__, obj)
-        for obj in session._changes['delete']:
+        for obj in session._changes["delete"]:
             if isinstance(obj, SearchableMixin):
                 try:
                     remove_from_index(obj.__tablename__, obj)
@@ -62,8 +64,9 @@ class SearchableMixin(object):
         for obj in cls.query:
             add_to_index(cls.__tablename__, obj)
 
-db.event.listen(db.session, 'before_commit', SearchableMixin.before_commit)
-db.event.listen(db.session, 'after_commit', SearchableMixin.after_commit)
+
+db.event.listen(db.session, "before_commit", SearchableMixin.before_commit)
+db.event.listen(db.session, "after_commit", SearchableMixin.after_commit)
 
 
 class PaginatedAPIMixin(object):
@@ -73,18 +76,20 @@ class PaginatedAPIMixin(object):
         data = {
             "item": [item.to_dict() for item in resources.items],
             "_meta": {
-                'page': page,
-                'per_page': per_page,
-                'total_pages': resources.pages,
-                'total_items': resources.total
+                "page": page,
+                "per_page": per_page,
+                "total_pages": resources.pages,
+                "total_items": resources.total,
             },
             "_links": {
-                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
-                'next': url_for(endpoint, page=page + 1, per_page=per_page,
-                                **kwargs) if resources.has_next else None,
-                'prev': url_for(endpoint, page=page - 1, per_page=per_page,
-                                **kwargs) if resources.has_prev else None
-            }
+                "self": url_for(endpoint, page=page, per_page=per_page, **kwargs),
+                "next": url_for(endpoint, page=page + 1, per_page=per_page, **kwargs)
+                if resources.has_next
+                else None,
+                "prev": url_for(endpoint, page=page - 1, per_page=per_page, **kwargs)
+                if resources.has_prev
+                else None,
+            },
         }
         return data
 
@@ -93,22 +98,22 @@ class PaginatedAPIMixin(object):
 def load_user(id):
     return User.query.get(int(id))
 
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    decks = db.relationship('Deck', backref='user', lazy='dynamic')
-    cards = db.relationship('Card', backref='user', lazy='dynamic')
+    decks = db.relationship("Deck", backref="user", lazy="dynamic")
+    cards = db.relationship("Card", backref="user", lazy="dynamic")
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    notifications = db.relationship('Notification', backref='user',
-                                lazy='dynamic')
-    tasks = db.relationship('Task', backref='user', lazy='dynamic')
+    notifications = db.relationship("Notification", backref="user", lazy="dynamic")
+    tasks = db.relationship("Task", backref="user", lazy="dynamic")
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
 
     def __repr__(self):
-        return '<User {}>'.format(self.username)
+        return "<User {}>".format(self.username)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -118,21 +123,24 @@ class User(UserMixin, db.Model):
 
     def get_reset_password_token(self, expires_in=600):
         return jwt.encode(
-            {'reset_password': self.id, 'exp': time() + expires_in},
-            current_app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
+            {"reset_password": self.id, "exp": time() + expires_in},
+            current_app.config["SECRET_KEY"],
+            algorithm="HS256",
+        ).decode("utf-8")
 
     @staticmethod
     def verify_reset_password_token(token):
         try:
-            id = jwt.decode(token, current_app.config['SECRET_KEY'],
-                            algorithms=['HS256'])['reset_password']
-        except:
+            id = jwt.decode(
+                token, current_app.config["SECRET_KEY"], algorithms=["HS256"]
+            )["reset_password"]
+        except Exception:
             return
         return User.query.get(id)
 
     def avatar(self, size):
-        digest = md5(self.email.lower().encode('utf-8')).hexdigest()
-        return f'https://www.gravatar.com/avatar/{digest}?d=robohash&s={size}'
+        digest = md5(self.email.lower().encode("utf-8")).hexdigest()
+        return f"https://www.gravatar.com/avatar/{digest}?d=robohash&s={size}"
 
     def add_notification(self, name, data):
         self.notifications.filter_by(name=name).delete()
@@ -141,10 +149,10 @@ class User(UserMixin, db.Model):
         return n
 
     def launch_task(self, name, description, *args, **kwargs):
-        rq_job = current_app.task_queue.enqueue('app.tasks.' + name, self.id,
-                                                *args, **kwargs)
-        task = Task(id=rq_job.get_id(), name=name, description=description,
-                    user=self)
+        rq_job = current_app.task_queue.enqueue(
+            "app.tasks." + name, self.id, *args, **kwargs
+        )
+        task = Task(id=rq_job.get_id(), name=name, description=description, user=self)
         db.session.add(task)
         return task
 
@@ -152,8 +160,7 @@ class User(UserMixin, db.Model):
         return Task.query.filter_by(user=self, complete=False).all()
 
     def get_task_in_progress(self, name):
-        return Task.query.filter_by(name=name, user=self,
-                                    complete=False).first()
+        return Task.query.filter_by(name=name, user=self, complete=False).first()
 
     def get_decks(self):
         decks = self.decks.order_by(Deck.timestamp.desc()).all()
@@ -161,32 +168,30 @@ class User(UserMixin, db.Model):
 
     def to_dict(self, include_email=False):
         data = {
-            'id': self.id,
-            'username': self.username,
-            'last_seen': self.last_seen.isoformat() + 'Z',
-            'card_count': self.cards.count(),
-            'deck_count': self.decks.count(),
-            '_links': {
-                'self': url_for('api.get_user', id=self.id)
-            }
+            "id": self.id,
+            "username": self.username,
+            "last_seen": self.last_seen.isoformat() + "Z",
+            "card_count": self.cards.count(),
+            "deck_count": self.decks.count(),
+            "_links": {"self": url_for("api.get_user", id=self.id)},
         }
         if include_email:
-            data['email'] = self.email
+            data["email"] = self.email
         return data
 
     def from_dict(self, data, new_user=False):
-        client_set_fields = ['username', 'email']
+        client_set_fields = ["username", "email"]
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])
-        if new_user and 'password' in data:
-            self.set_password(data['password'])
+        if new_user and "password" in data:
+            self.set_password(data["password"])
 
     def get_token(self, expires_in=3600):
         now = datetime.utcnow()
         if self.token and self.token_expiration > now + timedelta(seconds=60):
             return self.token
-        self.token = base64.b64encode(os.urandom(24)).decode('utf-8')
+        self.token = base64.b64encode(os.urandom(24)).decode("utf-8")
         self.token_expiration = now + timedelta(seconds=expires_in)
         db.session.add(self)
         return self.token
@@ -203,18 +208,18 @@ class User(UserMixin, db.Model):
 
 
 class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
-    __searchable__ = ['name']
+    __searchable__ = ["name"]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
     description = db.Column(db.String(1024))
-    timestamp = db.Column(db.DateTime, index=True,
-                          default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    cards = db.relationship('Card', backref='deck', lazy='dynamic',
-                            cascade='all, delete-orphan')
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    cards = db.relationship(
+        "Card", backref="deck", lazy="dynamic", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
-        return '<Deck {}>'.format(self.name)
+        return "<Deck {}>".format(self.name)
 
     def preview_description(self):
         if self.description:
@@ -231,31 +236,28 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
             "name": self.name,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            "_links": {
-                "self": url_for("api.get_deck", id=self.id)
-            }
+            "_links": {"self": url_for("api.get_deck", id=self.id)},
         }
         return data
 
     def from_dict(self, data):
-        client_set_fields = ['name', 'user_id']
+        client_set_fields = ["name", "user_id"]
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])
-        setattr(self, 'timestamp', datetime.utcnow())
+        setattr(self, "timestamp", datetime.utcnow())
 
 
 class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
-    __searchable__ = ['front', 'back']
+    __searchable__ = ["front", "back"]
     MAX_CHAR_BACK = 350
     MAX_CHAR_FRONT = 60
     id = db.Column(db.Integer, primary_key=True)
     front = db.Column(db.String(500))
     back = db.Column(db.String(1000))
-    timestamp = db.Column(db.DateTime, index=True,
-                          default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    deck_id = db.Column(db.Integer, db.ForeignKey('deck.id'))
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+    deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"))
     next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
 
@@ -297,7 +299,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         self.set_next_date()
 
     def __repr__(self):
-        return f'<Deck {self.get_deck_name()} - Card {self.front}>'
+        return f"<Deck {self.get_deck_name()} - Card {self.front}>"
 
     def to_dict(self):
         data = {
@@ -307,21 +309,25 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            'next_date': self.next_date,
-            'bucket': self.bucket,
-            "_links": {
-                "self": url_for("api.get_card", id=self.id)
-            }
+            "next_date": self.next_date,
+            "bucket": self.bucket,
+            "_links": {"self": url_for("api.get_card", id=self.id)},
         }
         return data
 
     def from_dict(self, data):
-        client_set_fields = ['front', 'back', 'user_id', 'deck_id',
-                             'next_date', 'bucket']
+        client_set_fields = [
+            "front",
+            "back",
+            "user_id",
+            "deck_id",
+            "next_date",
+            "bucket",
+        ]
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])
-        setattr(self, 'timestamp', datetime.utcnow())
+        setattr(self, "timestamp", datetime.utcnow())
 
     @staticmethod
     def _get_day_from_bucket(bucket):
@@ -338,10 +344,10 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         link = re.compile("""src=[\"\'](.+?)[\"\']""")
 
         links = link.finditer(back)
-        for l in links:
-            full_path = l.group(1)
-            filename = full_path.split('/')[-1]
-            filepath = os.path.join('app', current_app.config['UPLOAD_PATH'], filename)
+        for link in links:
+            full_path = link.group(1)
+            filename = full_path.split("/")[-1]
+            filepath = os.path.join("app", current_app.config["UPLOAD_PATH"], filename)
             # Delete
             os.remove(filepath)
 
@@ -349,7 +355,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), index=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     timestamp = db.Column(db.Float, index=True, default=time)
     payload_json = db.Column(db.Text)
 
@@ -361,7 +367,7 @@ class Task(db.Model):
     id = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(128), index=True)
     description = db.Column(db.String(128))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     complete = db.Column(db.Boolean, default=False)
 
     def get_rq_job(self):
@@ -373,4 +379,4 @@ class Task(db.Model):
 
     def get_progress(self):
         job = self.get_rq_job()
-        return job.meta.get('progress', 0) if job is not None else 100
+        return job.meta.get("progress", 0) if job is not None else 100
