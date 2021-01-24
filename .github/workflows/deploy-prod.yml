@@ -19,12 +19,12 @@ jobs:
 
       - name: Create .env file
         env:
-          SECRET_KEY: {{ secrets.SECRET_KEY }}
-          MAIL_USERNAME: {{ secrets.MAIL_USERNAME }}
-          MAIL_PASSWORD: {{ secrets.MAIL_PASSWORD }}
-          POSTGRES_USER: {{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: {{ secrets.POSTGRES_PASSWORD }}
-          TINYMCE_API_KEY: {{ secrets.TINYMCE_API_KEY }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          TINYMCE_API_KEY: ${{ secrets.TINYMCE_API_KEY }}
         run: |
           touch .env
           echo SECRET_KEY="$SECRET_KEY" >> .env
