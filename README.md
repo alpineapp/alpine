@@ -23,7 +23,7 @@ VS Code setting:
     ],
 ```
 
-## How to run unit tests
+## Run unit tests
 ```
 python tests.py
 ```
@@ -35,3 +35,10 @@ http POST http://localhost:5000/api/tokens --auth <username>:<password>
 # Call using the http Python library
 http GET http://localhost:5000/api/decks/1 "Authorization:Bearer <token>"
 ```
+
+## Deploy to PROD
+First, create a PR to `master` branch.
+
+After merged, you can choose either way to deploy by pushing to GitHub:
+1. Create a release, with its tag following this [guideline](https://alpineapp.atlassian.net/projects/DEV?selectedItem=com.atlassian.jira.jira-projects-plugin%3Arelease-page)
+2. Create a tag with prefix "v", e.g.: `v-Abaddon-1.0`
