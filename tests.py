@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import unittest
 from app import create_app, db
 from app.models import User
@@ -33,6 +32,7 @@ class UserModelCase(unittest.TestCase):
         self.assertEqual(u.avatar(128), ('https://www.gravatar.com/avatar/'
                                          'd4c74594d841139328695756648b6bd6'
                                          '?d=robohash&s=128'))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

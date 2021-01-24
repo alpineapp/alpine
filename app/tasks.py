@@ -1,4 +1,3 @@
-import time
 import sys
 import json
 
@@ -26,6 +25,7 @@ def _set_task_progress(progress):
             task.complete = True
         db.session.commit()
 
+
 def export_cards(user_id):
     try:
         user = User.query.get(user_id)
@@ -44,7 +44,7 @@ def export_cards(user_id):
                    attachments=[('cards.json', 'application/json',
                                  json.dumps({'cards': data}, indent=4))],
                    sync=True)
-    except:
+    except Exception:
         app.logger.error('Unhandled exception', exc_info=sys.exc_info())
     finally:
         _set_task_progress(100)

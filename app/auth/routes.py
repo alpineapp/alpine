@@ -1,13 +1,11 @@
-from flask import render_template, flash, redirect, url_for, \
-                  request, jsonify
-from flask_login import current_user, login_user, logout_user, \
-                        login_required
+from flask import render_template, flash, redirect, url_for, request
+from flask_login import current_user, login_user, logout_user
 from werkzeug.urls import url_parse
 
 from app import db
 from app.models import User
 from app.auth.forms import LoginForm, RegistrationForm, ResetPasswordRequestForm, \
-                           ResetPasswordForm
+    ResetPasswordForm
 from app.auth import bp
 from app.auth.email import send_password_reset_email
 
@@ -29,10 +27,12 @@ def login():
         return redirect(next_page)
     return render_template('auth/login.html', title='Sign In', form=form)
 
+
 @bp.route('/logout')
 def logout():
     logout_user()
     return redirect(url_for('main.index'))
+
 
 @bp.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
@@ -48,6 +48,7 @@ def reset_password_request():
     return render_template('auth/reset_password_request.html',
                            title='Reset Password', form=form)
 
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -61,6 +62,7 @@ def register():
         flash('Congratulations, you are now a registered user!')
         return redirect(url_for('auth.login'))
     return render_template('auth/register.html', title='Register', form=form)
+
 
 @bp.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):

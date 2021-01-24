@@ -18,7 +18,7 @@ class Config(object):
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') is not None
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    ADMINS = ['binhalpine@gmail.com'] #TBU when gmail domain is ready
+    ADMINS = ['binhalpine@gmail.com']  # TBU when gmail domain is ready
     # Pagination
     CARDS_PER_PAGE = 6
     # Full-text search
@@ -28,6 +28,6 @@ class Config(object):
     # Redis
     REDIS_URL = os.environ.get('REDIS_URL') or 'redis://'
     # Uploaded images
-    MAX_CONTENT_LENGTH = 1024 * 1024 * 5 # 5 MB
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 5  # 5 MB
     UPLOAD_EXTENSIONS = ['.jpg', '.png', '.gif']
     UPLOAD_PATH = 'static/uploads'

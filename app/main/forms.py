@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import SubmitField, TextAreaField, StringField, IntegerField, \
-                    BooleanField, SelectField
+    SelectField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired, Length, Optional
 from flask import request
@@ -27,9 +27,9 @@ class CardForm(FlaskForm):
     deck = StringField('Deck', validators=[DataRequired(),
                                            Length(min=1, max=256)])
     next_date = DateField('Next Learn Date', validators=[Optional()],
-                           format="%Y-%m-%d")
+                          format="%Y-%m-%d")
     bucket = SelectField('Bucket', default=1, coerce=int,
-                         choices=list(zip(range(1,7), range(1,7))))
+                         choices=list(zip(range(1, 7), range(1, 7))))
     submit = SubmitField('Submit')
 
 

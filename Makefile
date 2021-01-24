@@ -12,3 +12,7 @@ endif
 	docker-compose down
 	docker-compose build
 	docker-compose up -d
+
+lint:
+	flake8 ./app --count --select=E9,F63,F7,F82,F401 --show-source --statistics \
+			--extend-ignore=E402

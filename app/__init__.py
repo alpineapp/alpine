@@ -30,6 +30,7 @@ mail = Mail()
 bootstrap = Bootstrap()
 moment = Moment()
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     CORS(app)
@@ -66,7 +67,8 @@ def create_app(config_class=Config):
         if app.config['MAIL_SERVER']:
             auth = None
             if app.config['MAIL_USERNAME'] or app.config['MAIL_PASSWORD']:
-                auth = (app.config['MAIL_USERNAME'], app.config['MAIL_PASSWORD'])
+                auth = (app.config['MAIL_USERNAME'],
+                        app.config['MAIL_PASSWORD'])
             secure = None
             if app.config['MAIL_USE_TLS']:
                 secure = ()
@@ -86,7 +88,7 @@ def create_app(config_class=Config):
             if not os.path.exists('logs'):
                 os.mkdir('logs')
             file_handler = RotatingFileHandler('logs/alpine.log',
-                                            maxBytes=10240, backupCount=10)
+                                               maxBytes=10240, backupCount=10)
             file_handler.setFormatter(logging.Formatter(
                 '%(asctime)s %(levelname)s: %(message)s '
                 '[in %(pathname)s:%(lineno)d]'))
@@ -97,5 +99,3 @@ def create_app(config_class=Config):
         app.logger.info('Alpine startup')
 
     return app
-
-from app import models
