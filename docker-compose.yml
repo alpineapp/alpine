@@ -7,6 +7,7 @@ networks:
 volumes:
     v-alpine-db:
     v-alpine-es:
+    v-alpine-metabase:
 
 services:
   # ----------------------------------------------
@@ -46,6 +47,10 @@ services:
       retries: 10
       test: curl -s http://localhost:9200/_cluster/health | grep -vq '"status":"red"'
     restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "0.30"
 
   # Kibana
   # kibana:
@@ -117,6 +122,31 @@ services:
       ELASTICSEARCH_URL: http://elasticsearch:9200
       DATABASE_URL: postgres+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
+      ENV: ${ENV}
     networks:
       - alpine-net
     restart: always
+
+  metabase-app:
+    image: metabase/metabase
+    restart: always
+    ports:
+      - 3000:3000
+    volumes:
+      - v-alpine-metabase:/metabase-data
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${POSTGRES_DB}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      MB_DB_HOST: db
+      JAVA_TOOL_OPTIONS: "-Xmx512M"
+    depends_on:
+      - db
+    networks:
+      - alpine-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.20"
