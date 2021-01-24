@@ -16,11 +16,12 @@ app.app_context().push()
 def _set_task_progress(progress):
     job = get_current_job()
     if job:
-        job.meta['progress'] = progress
+        job.meta["progress"] = progress
         job.save_meta()
         task = Task.query.get(job.get_id())
-        task.user.add_notification('task_progress', {'task_id': job.get_id(),
-                                                     'progress': progress})
+        task.user.add_notification(
+            "task_progress", {"task_id": job.get_id(), "progress": progress}
+        )
         if progress >= 100:
             task.complete = True
         db.session.commit()
@@ -37,14 +38,22 @@ def export_cards(user_id):
             data.append(card.to_dict())
             i += 1
             _set_task_progress(100 * i // total_cards)
-        send_email('[Alpine App] Your cards',
-                   sender=app.config['ADMINS'][0], recipients=[user.email],
-                   text_body=render_template('email/export_cards.txt', user=user),
-                   html_body=render_template('email/export_cards.html', user=user),
-                   attachments=[('cards.json', 'application/json',
-                                 json.dumps({'cards': data}, indent=4))],
-                   sync=True)
+        send_email(
+            "[Alpine App] Your cards",
+            sender=app.config["ADMINS"][0],
+            recipients=[user.email],
+            text_body=render_template("email/export_cards.txt", user=user),
+            html_body=render_template("email/export_cards.html", user=user),
+            attachments=[
+                (
+                    "cards.json",
+                    "application/json",
+                    json.dumps({"cards": data}, indent=4),
+                )
+            ],
+            sync=True,
+        )
     except Exception:
-        app.logger.error('Unhandled exception', exc_info=sys.exc_info())
+        app.logger.error("Unhandled exception", exc_info=sys.exc_info())
     finally:
         _set_task_progress(100)
