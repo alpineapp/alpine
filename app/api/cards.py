@@ -14,6 +14,7 @@ def get_card(id):
         abort(403)
     return jsonify(Card.query.get_or_404(id).to_dict())
 
+
 @bp.route('/cards/user/<int:user_id>', methods=['GET'])
 @token_auth.login_required
 def get_cards(user_id):
@@ -25,6 +26,7 @@ def get_cards(user_id):
                                    page, per_page, 'api.get_cards',
                                    user_id=user_id)
     return jsonify(data)
+
 
 @bp.route('/cards/user/<int:user_id>', methods=['POST'])
 @token_auth.login_required
@@ -43,6 +45,7 @@ def create_card(user_id):
     response.status_code = 201
     response.headers['Location'] = url_for('api.get_card', id=card.id)
     return response
+
 
 @bp.route('/cards/<int:id>', methods=['PUT'])
 @token_auth.login_required

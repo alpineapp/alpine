@@ -3,19 +3,18 @@ import os
 import imghdr
 
 from flask import render_template, flash, redirect, url_for, \
-                  request, jsonify, current_app, g, session, \
-                  abort
-from werkzeug.urls import url_parse
+    request, jsonify, current_app, g, session, \
+    abort
 from werkzeug.utils import secure_filename
-from flask_login import current_user, login_user, logout_user, \
-                        login_required
+from flask_login import current_user, \
+    login_required
 
 from app import db
 from app.main import bp
 from app.main.forms import CardForm, SearchForm, EmptyForm, \
-                           BeforeLearningForm, ClearLearningForm, LearningForm, \
-                           DeckForm
-from app.models import User, Card, Notification, Deck
+    BeforeLearningForm, ClearLearningForm, LearningForm, \
+    DeckForm
+from app.models import Card, Notification, Deck
 from app.learning import LearningHelper
 
 
@@ -26,6 +25,7 @@ def validate_image(stream):
     if not format:
         return None
     return '.' + (format if format != 'jpeg' else 'jpg')
+
 
 @bp.route('/upload_image', methods=['POST'])
 def upload_image():
@@ -44,8 +44,9 @@ def upload_image():
                                      current_app.config['UPLOAD_PATH'],
                                      filename_new)
         uploaded_file.save(file_location)
-    res = { 'location': f'{current_app.config["UPLOAD_PATH"]}/{filename_new}' }
+    res = {'location': f'{current_app.config["UPLOAD_PATH"]}/{filename_new}'}
     return res
+
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/index', methods=['GET', 'POST'])
@@ -82,6 +83,7 @@ def index():
                            mode='create',
                            next_url=next_url, prev_url=prev_url)
 
+
 @bp.before_app_request
 def before_request():
     if current_user.is_authenticated:
@@ -89,12 +91,14 @@ def before_request():
         db.session.commit()
         g.search_form = SearchForm()
 
+
 @bp.route('/display_back', methods=['POST'])
 @login_required
 def display_back():
     card_id = request.form['card_id']
     card = Card.query.get(int(card_id))
     return jsonify({'text': card.back})
+
 
 @bp.route('/search')
 @login_required
@@ -111,12 +115,14 @@ def search():
     return render_template('search.html', title='Search card', cards=cards,
                            next_url=next_url, prev_url=prev_url)
 
+
 @bp.route('/card/<card_id>/popup')
 @login_required
 def card_popup(card_id):
     card = Card.query.get_or_404(int(card_id))
     form = EmptyForm()
     return render_template('card_popup.html', card=card, user=card.user, form=form)
+
 
 @bp.route('/notifications')
 @login_required
@@ -125,10 +131,11 @@ def notifications():
     notifications = current_user.notifications.filter(
         Notification.timestamp > since).order_by(Notification.timestamp.asc())
     return jsonify([{
-            'name': n.name,
-            'data': n.get_data(),
-            'timestamp': n.timestamp
-        } for n in notifications])
+        'name': n.name,
+        'data': n.get_data(),
+        'timestamp': n.timestamp
+    } for n in notifications])
+
 
 @bp.route('/export_cards')
 @login_required
@@ -139,6 +146,7 @@ def export_cards():
         current_user.launch_task('export_cards', 'Exporting cards...')
         db.session.commit()
     return redirect(url_for('main.index'))
+
 
 @bp.route('/<deck_id>/create_card', methods=['GET', 'POST'])
 @login_required
@@ -161,6 +169,7 @@ def create_card(deck_id):
         form.next_date.data = datetime.today()
         form.deck.data = deck.name
     return render_template('create_card.html', form=form)
+
 
 @bp.route('/card/<card_id>/edit_card', methods=['GET', 'POST'])
 @login_required
@@ -195,6 +204,7 @@ def edit_card(card_id):
         flash('Your card is edited!')
     return redirect(url_for('main.deck_profile', deck_id=deck.id))
 
+
 @bp.route('/card/<card_id>/delete_card', methods=['GET', 'POST'])
 @login_required
 def delete_card(card_id):
@@ -205,6 +215,7 @@ def delete_card(card_id):
     db.session.delete(card)
     db.session.commit()
     return redirect(url_for('main.deck_profile', deck_id=deck_id))
+
 
 @bp.route('/deck/<deck_id>', methods=['GET', 'POST'])
 @login_required
@@ -225,6 +236,7 @@ def deck_profile(deck_id):
                            edit_deck_form=edit_deck_form,
                            next_url=next_url, prev_url=prev_url)
 
+
 @bp.route('/deck', methods=['GET', 'POST'])
 @login_required
 def deck():
@@ -237,6 +249,7 @@ def deck():
         flash('Your deck is added!')
         return redirect(url_for('main.deck_profile', deck_id=deck.id))
     return render_template("deck.html", edit_deck_form=edit_deck_form, user=current_user)
+
 
 @bp.route('/deck/edit_deck/<deck_id>', methods=['GET', 'POST'])
 @login_required
@@ -257,6 +270,7 @@ def edit_deck(deck_id):
         flash('Your deck is edited!')
     return redirect(url_for('main.deck_profile', deck_id=deck.id))
 
+
 @bp.route('/deck/<deck_id>/delete_deck', methods=['GET', 'POST'])
 @login_required
 def delete_deck(deck_id):
@@ -271,6 +285,7 @@ def delete_deck(deck_id):
     else:
         return redirect(url_for('main.index'))
 
+
 def get_cards_to_learn(deck_id=None, learn_date=None, num_random=5):
     if learn_date is None:
         learn_date = datetime.today()
@@ -280,6 +295,7 @@ def get_cards_to_learn(deck_id=None, learn_date=None, num_random=5):
     lh.collect_random_learned()
     lh.build()
     return lh
+
 
 @bp.route('/today_cards')
 @login_required
@@ -291,6 +307,7 @@ def today_cards():
     else:
         lh = session.get('lh')
         return lh['stats']
+
 
 @bp.route('/before_learning', methods=['GET', 'POST'])
 @login_required
@@ -310,6 +327,7 @@ def before_learning():
     start_form.learn_date.data = datetime.today()
     return render_template("before_learning.html", start_form=start_form,
                            clear_form=clear_form, lh_stats=lh.stats)
+
 
 @bp.route('/learning', methods=['GET', 'POST'])
 @login_required
