@@ -1,12 +1,10 @@
 # Alpine Spaced Repetition Learing App
 
 ## Set up DEV environment
-For a new MacOS:
 ```
-python3 -m venv alpine
-source ./alpine/bin/activate
-pip install --upgrade pip # to install pip version 20.2.4
-pip install -r requirements.txt
+chmod -R +x scripts
+# Build environment with Docker
+./scripts/rebuild_docker.sh
 ```
 
 ## Codebase format
