@@ -7,6 +7,10 @@ chmod -R +x scripts
 ./scripts/rebuild_docker.sh
 ```
 
+### Python Docstring Generator
+We use Google convention of Python Docstring.
+If you use VSCode, install `Python Docstring Generator` extension.
+
 ## Codebase format
 Please use flake8 as your linter.
 VS Code setting:
