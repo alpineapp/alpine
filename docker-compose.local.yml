@@ -1,0 +1,5 @@
+services:
+  alpine:
+    volumes:
+      - ./app:/home/alpine/app
+      - ./migrations:/home/alpine/migrations
