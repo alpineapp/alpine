@@ -27,7 +27,7 @@ VS Code setting:
 
 ## Run unit tests
 ```
-python tests.py
+python function_tests.py
 ```
 
 ## Test API
