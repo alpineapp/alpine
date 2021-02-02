@@ -3,3 +3,21 @@ services:
     volumes:
       - ./app:/home/alpine/app
       - ./migrations:/home/alpine/migrations
+
+  elasticsearch:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.90"
+
+  metabase-app:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.90"
+
+  adminer:
+    deploy:
+      resources:
+        limits:
+          cpus: "0.90"
