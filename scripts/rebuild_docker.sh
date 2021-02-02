@@ -2,6 +2,7 @@
 . ./scripts/utils.sh
 
 set_up_args() {
+    print blue "ENV = $ENV"
     if [[ -z $ENV ]]
     then
         # echo -e "${GREEN}Undefined env var ENV. Should be {local, prod}"
