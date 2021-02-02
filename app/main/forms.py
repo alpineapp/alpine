@@ -49,9 +49,5 @@ class BeforeLearningForm(FlaskForm):
     submit = SubmitField("Start")
 
 
-class ClearLearningForm(FlaskForm):
-    submit = SubmitField("Clear")
-
-
 class LearningForm(FlaskForm):
     next = SubmitField("Next")

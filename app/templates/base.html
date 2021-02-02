@@ -17,14 +17,11 @@
     {% if current_user.is_authenticated %}
     <a class='btn btn-primary mr-3' href="{{ url_for('main.before_learning') }}">
         Learn
-        {% if ( session['lh'] and session['lh']['stats'] ) %}
-            <span id='today_cards_count' class="badge badge-light">
-                {{ session['lh']['stats']['num_total'] }}
-            </span>
-        {% endif %}
+        <span id='today_cards_count' class="badge badge-light"></span>
     </a>
     {% endif %}
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -88,15 +85,15 @@
 {{ moment.include_moment() }}
 
 <script>
-    $(document).ready(function() {
+    $(document).ready(function () {
 
-        $(".truncate-overflow").each(function(index, element) {
+        $(".truncate-overflow").each(function (index, element) {
             // Truncate to only 2 lines
             $clamp(element, { clamp: 2 });
         });
 
         // For learning session JS utilities
-        $("#fail").click(function() {
+        $("#fail").click(function () {
             $("#fail").hide();
             $("#nextInput").val("fail");
             $("#next").show();
@@ -108,7 +105,7 @@
             $("#displayBtn").hide();
         })
 
-        $("#ok").click(function() {
+        $("#ok").click(function () {
             $("#fail").hide();
             $("#nextInput").val("ok");
             $("#next").show();
@@ -120,42 +117,42 @@
             $("#displayBtn").hide();
         })
 
-        if(window.location.pathname.includes('/learning')) {
-            $(function() {
+        if (window.location.pathname.includes('/learning')) {
+            $(function () {
                 var card_id = $("#cardContainer").attr('card_id');
                 var displayElem = $("#displayTarget");
                 $.post('/display_back', {
                     card_id: card_id
-                }).done(function(response) {
+                }).done(function (response) {
                     displayElem.html(response['text']);
-                }).fail(function() {
+                }).fail(function () {
                     displayElem.html("{{ 'Error: Could not contact server.' }}");
                 });
             })
         }
 
-        $("#displayBtn").click(function() {
+        $("#displayBtn").click(function () {
             $("#backPlaceholder").toggle();
             $("#displayTarget").toggle();
-            $(this).text(function(i, text){
+            $(this).text(function (i, text) {
                 return text === "Display" ? "Hide" : "Display";
             })
         })
 
-    //     // executes when HTML-Document is loaded and DOM is ready
-    //     console.log("document is ready");
+        //     // executes when HTML-Document is loaded and DOM is ready
+        //     console.log("document is ready");
 
-    //     $( ".card" ).hover(
-    //         function() {
-    //             $(this).addClass('shadow-lg').css('cursor', 'pointer');
-    //         }, function() {
-    //             $(this).removeClass('shadow-lg');
-    //         }
-    //     );
-    //     // document ready
+        //     $( ".card" ).hover(
+        //         function() {
+        //             $(this).addClass('shadow-lg').css('cursor', 'pointer');
+        //         }, function() {
+        //             $(this).removeClass('shadow-lg');
+        //         }
+        //     );
+        //     // document ready
     });
 
-    $('.tinymce-display').each(function() {
+    $('.tinymce-display').each(function () {
         var content = $(this).text();
         $(this).html(content);
     });
@@ -168,35 +165,36 @@
         $('[data-toggle="tooltip"]').tooltip()
     })
 
-    function set_today_cards_count(n) {
-        $('#today_cards_count').text(n);
-    }
-
     {% if current_user.is_authenticated %}
-    $(function() {
-        $.ajax('{{ url_for("main.today_cards") }}').done(
-            function(lh_stats) {
-                set_today_cards_count(lh_stats['num_total']);
+    $(function set_today_cards_count() {
+        $.ajax('{{ url_for("main.get_current_stats") }}').done(
+            function (lh_stats) {
+                const today_cards_count = lh_stats['num_total'] !== null ? lh_stats['num_total'] : 0;
+                $('#today_cards_count').text(today_cards_count);
+            }
+        ).fail(
+            function () {
+                $('#today_cards_count').text(0);
             }
         );
     })
 
-    $(function() {
+    $(function () {
         var since = 0;
-        setInterval(function() {
+        setInterval(function () {
             $.ajax('{{ url_for("main.notifications") }}?since=' + since).done(
-            function(notifications) {
-                for (var i = 0; i < notifications.length; i++) {
-                    switch (notifications[i].name) {
-                        case 'task_progress':
-                            set_task_progress(
-                            notifications[i].data.task_id,
-                            notifications[i].data.progress);
-                        break;
+                function (notifications) {
+                    for (var i = 0; i < notifications.length; i++) {
+                        switch (notifications[i].name) {
+                            case 'task_progress':
+                                set_task_progress(
+                                    notifications[i].data.task_id,
+                                    notifications[i].data.progress);
+                                break;
+                        }
+                        since = notifications[i].timestamp;
                     }
-                    since = notifications[i].timestamp;
                 }
-            }
             );
         }, 10000);
     });
