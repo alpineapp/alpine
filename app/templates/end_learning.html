@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-{% if lh.cursor == 0 %}
-<h1>You have no card to learn today!</h1>
-{% else %}
 <h3>Congratulations! You have completed today learning session.</h3>
 <h3>Here's the summary:</h3>
 <div class="row mt-3">
@@ -14,7 +11,7 @@
                 <h6 class="card-subtitle mb-2 text-secondary">Success</h6>
                 <div class="row align-items-center mb-1">
                     <div class="col-10">
-                        <span class="card-title h2 text-success">{{ lh.stats['num_ok'] }}</span><span class='text-secondary'> cards</span>
+                        <span class="card-title h2 text-success">{{ lh.get_cards('success')|length }}</span><span class='text-secondary'> cards</span>
                     </div>
                     <div style="opacity: 0.5;">
                         {% include 'icons/arrow_square_down.html' %}
@@ -26,8 +23,10 @@
 </div>
 
 <div class='row mt-3 collapse' id="collapseSuccess">
-    {% for card in lh.get_cards('success') %}
+    {% for lsf in lh.get_cards('success') %}
+    {% with card = lsf.card %}
     {% include 'card.html' %}
+    {% endwith %}
     {% endfor %}
 </div>
 
@@ -41,7 +40,7 @@
                 <h6 class="card-subtitle mb-2 text-secondary">Fail</h6>
                 <div class="row align-items-center mb-1">
                     <div class="col-10">
-                        <span class="card-title h2 text-danger">{{ lh.stats['num_fail'] }}</span><span class='text-secondary'> cards</span>
+                        <span class="card-title h2 text-danger">{{ lh.get_cards('fail')|length }}</span><span class='text-secondary'> cards</span>
                     </div>
                     <div style="opacity: 0.5;">
                         {% include 'icons/arrow_square_down.html' %}
@@ -53,10 +52,11 @@
 </div>
 
 <div class='row mt-3 collapse' id="collapseFail">
-    {% for card in lh.get_cards('fail') %}
+    {% for lsf in lh.get_cards('fail') %}
+    {% with card = lsf.card %}
     {% include 'card.html' %}
+    {% endwith %}
     {% endfor %}
 </div>
 
-{% endif %}
 {% endblock %}

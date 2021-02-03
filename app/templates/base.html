@@ -1,209 +1,153 @@
-{% extends 'bootstrap/base.html' %}
-
-{% block styles %}
-{{super()}}
-<link rel="stylesheet" href="{{url_for('static', filename='general.css')}}">
-<link rel="stylesheet" href="{{url_for('static', filename='_tinymce.css')}}">
-<link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
-{% endblock %}
-
-{% block title %}
-{% if title %}{{ title }} - Alpine{% else %}Welcome to Alpine{% endif %}
-{% endblock %}
-
-{% block navbar %}
+{% extends 'bootstrap/base.html' %} {% block styles %} {{super()}}
+<link rel="stylesheet" href="{{url_for('static', filename='general.css')}}" />
+<link rel="stylesheet" href="{{url_for('static', filename='_tinymce.css')}}" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter&display=swap"
+  rel="stylesheet"
+/>
+{% endblock %} {% block title %} {% if title %}{{ title }} - Alpine{% else
+%}Welcome to Alpine{% endif %} {% endblock %} {% block navbar %}
 <nav class="navbar navbar-expand-lg navbar-light bg-light mb-3">
-    <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
-    {% if current_user.is_authenticated %}
-    <a class='btn btn-primary mr-3' href="{{ url_for('main.before_learning') }}">
-        Learn
-        {% if ( session['lh'] and session['lh']['stats'] ) %}
-            <span id='today_cards_count' class="badge badge-light">
-                {{ session['lh']['stats']['num_total'] }}
-            </span>
-        {% endif %}
+  <a class="navbar-brand" href="{{ url_for('main.index') }}">Alpine</a>
+  {% if current_user.is_authenticated %}
+  <a class="btn btn-primary mr-3" href="{{ url_for('main.before_learning') }}">
+    Learn
+    <span id="today_cards_count" class="badge badge-light"></span>
+  </a>
+  {% endif %}
+  <button
+    class="navbar-toggler"
+    type="button"
+    data-toggle="collapse"
+    data-target="#navbarSupportedContent"
+    aria-controls="navbarSupportedContent"
+    aria-expanded="false"
+    aria-label="Toggle navigation"
+  >
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <a class="btn btn-outline-dark mr-3" href="{{ url_for('main.deck') }}">
+      {% include 'icons/deck.html' %} My Decks
     </a>
+    {% if g.search_form %}
+    <div class="navbar-nav">
+      <form
+        class="form-inline my-2 my-lg-0"
+        method="get"
+        action="{{ url_for('main.search') }}"
+      >
+        {{ g.search_form.q(size=20, class='form-control mr-sm-2',
+        placeholder=g.search_form.q.label.text) }}
+      </form>
+    </div>
     {% endif %}
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <a class='btn btn-outline-dark mr-3' href="{{ url_for('main.deck') }}">
-            {% include 'icons/deck.html' %}
-            My Decks
-        </a>
-        {% if g.search_form %}
-        <div class='navbar-nav'>
-            <form class="form-inline my-2 my-lg-0" method="get" action="{{ url_for('main.search') }}">
-                {{ g.search_form.q(size=20, class='form-control mr-sm-2', placeholder=g.search_form.q.label.text) }}
-            </form>
-        </div>
+    <div class="mr-auto"></div>
+    <div class="navbar-nav">
+      <ul class="navbar-nav">
+        {% if current_user.is_anonymous %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+        </li>
         {% endif %}
-        <div class='mr-auto'></div>
-        <div class="navbar-nav">
-            <ul class="navbar-nav">
-                {% if current_user.is_anonymous %}
-                <li class='nav-item'><a class='nav-link' href="{{ url_for('auth.login') }}">Login</a></li>
-                {% else %}
-                <li class='nav-item'><a class='nav-link' href="{{ url_for('auth.logout') }}">Logout</a></li>
-                {% endif %}
-            </ul>
-        </div>
+      </ul>
     </div>
+  </div>
 </nav>
-{% endblock %}
-
-{% block content %}
+{% endblock %} {% block content %}
 <div class="container">
-    {% if current_user.is_authenticated %}
-    {% with tasks = current_user.get_tasks_in_progress() %}
-    {% if tasks %}
-    {% for task in tasks %}
-    <div class="alert alert-info" role="alert">
-        {{ task.description }}
-        <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
-    </div>
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
-    {% endif %}
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    {% for category, message in get_flashed_messages(with_categories=True) %}
-    {% if category != "message" %}
-    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-    {% else %}
-    <div class="alert alert-info" role="alert">{{ message }}</div>
-    {% endif %}
-    {% endfor %}
-    {% endif %}
-    {% endwith %}
-    {# application content needs to be provided in the app_content block #}
-    {% block app_content %}{% endblock %}
+  {% if current_user.is_authenticated %} {% with tasks =
+  current_user.get_tasks_in_progress() %} {% if tasks %} {% for task in tasks %}
+  <div class="alert alert-info" role="alert">
+    {{ task.description }}
+    <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
+  </div>
+  {% endfor %} {% endif %} {% endwith %} {% endif %} {% with messages =
+  get_flashed_messages() %} {% if messages %} {% for category, message in
+  get_flashed_messages(with_categories=True) %} {% if category != "message" %}
+  <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+  {% else %}
+  <div class="alert alert-info" role="alert">{{ message }}</div>
+  {% endif %} {% endfor %} {% endif %} {% endwith %} {# application content
+  needs to be provided in the app_content block #} {% block app_content %}{%
+  endblock %}
 </div>
-{% endblock %}
-
-{% block scripts %}
-{{ super() }}
-{{ moment.include_moment() }}
+{% endblock %} {% block scripts %} {{ super() }} {{ moment.include_moment() }}
 
 <script>
-    $(document).ready(function() {
+  $(document).ready(function () {
 
-        $(".truncate-overflow").each(function(index, element) {
-            // Truncate to only 2 lines
-            $clamp(element, { clamp: 2 });
-        });
+      $(".truncate-overflow").each(function (index, element) {
+          // Truncate to only 2 lines
+          $clamp(element, { clamp: 2 });
+      });
 
-        // For learning session JS utilities
-        $("#fail").click(function() {
-            $("#fail").hide();
-            $("#nextInput").val("fail");
-            $("#next").show();
-            $("#ok").hide();
-            if ($("#backPlaceholder").is(":visible")) {
-                $("#backPlaceholder").toggle();
-                $("#displayTarget").toggle();
-            }
-            $("#displayBtn").hide();
-        })
+      //     // executes when HTML-Document is loaded and DOM is ready
+      //     console.log("document is ready");
 
-        $("#ok").click(function() {
-            $("#fail").hide();
-            $("#nextInput").val("ok");
-            $("#next").show();
-            $("#ok").hide();
-            if ($("#backPlaceholder").is(":visible")) {
-                $("#backPlaceholder").toggle();
-                $("#displayTarget").toggle();
-            }
-            $("#displayBtn").hide();
-        })
+      //     $( ".card" ).hover(
+      //         function() {
+      //             $(this).addClass('shadow-lg').css('cursor', 'pointer');
+      //         }, function() {
+      //             $(this).removeClass('shadow-lg');
+      //         }
+      //     );
+      //     // document ready
+  });
 
-        if(window.location.pathname.includes('/learning')) {
-            $(function() {
-                var card_id = $("#cardContainer").attr('card_id');
-                var displayElem = $("#displayTarget");
-                $.post('/display_back', {
-                    card_id: card_id
-                }).done(function(response) {
-                    displayElem.html(response['text']);
-                }).fail(function() {
-                    displayElem.html("{{ 'Error: Could not contact server.' }}");
-                });
-            })
-        }
+  $('.tinymce-display').each(function () {
+      var content = $(this).text();
+      $(this).html(content);
+  });
 
-        $("#displayBtn").click(function() {
-            $("#backPlaceholder").toggle();
-            $("#displayTarget").toggle();
-            $(this).text(function(i, text){
-                return text === "Display" ? "Hide" : "Display";
-            })
-        })
+  $(function () {
+      $('[data-toggle="popover"]').popover()
+  })
 
-    //     // executes when HTML-Document is loaded and DOM is ready
-    //     console.log("document is ready");
+  $(function () {
+      $('[data-toggle="tooltip"]').tooltip()
+  })
 
-    //     $( ".card" ).hover(
-    //         function() {
-    //             $(this).addClass('shadow-lg').css('cursor', 'pointer');
-    //         }, function() {
-    //             $(this).removeClass('shadow-lg');
-    //         }
-    //     );
-    //     // document ready
-    });
+  {% if current_user.is_authenticated %}
+  $(function set_today_cards_count() {
+      $.ajax('{{ url_for("main.get_current_stats") }}').done(
+          function (lh_stats) {
+              const today_cards_count = lh_stats['num_total'] !== null ? lh_stats['num_total'] : 0;
+              $('#today_cards_count').text(today_cards_count);
+          }
+      ).fail(
+          function () {
+              $('#today_cards_count').text(0);
+          }
+      );
+  })
 
-    $('.tinymce-display').each(function() {
-        var content = $(this).text();
-        $(this).html(content);
-    });
+  $(function () {
+      var since = 0;
+      setInterval(function () {
+          $.ajax('{{ url_for("main.notifications") }}?since=' + since).done(
+              function (notifications) {
+                  for (var i = 0; i < notifications.length; i++) {
+                      switch (notifications[i].name) {
+                          case 'task_progress':
+                              set_task_progress(
+                                  notifications[i].data.task_id,
+                                  notifications[i].data.progress);
+                              break;
+                      }
+                      since = notifications[i].timestamp;
+                  }
+              }
+          );
+      }, 10000);
+  });
+  {% endif %}
 
-    $(function () {
-        $('[data-toggle="popover"]').popover()
-    })
-
-    $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
-    })
-
-    function set_today_cards_count(n) {
-        $('#today_cards_count').text(n);
-    }
-
-    {% if current_user.is_authenticated %}
-    $(function() {
-        $.ajax('{{ url_for("main.today_cards") }}').done(
-            function(lh_stats) {
-                set_today_cards_count(lh_stats['num_total']);
-            }
-        );
-    })
-
-    $(function() {
-        var since = 0;
-        setInterval(function() {
-            $.ajax('{{ url_for("main.notifications") }}?since=' + since).done(
-            function(notifications) {
-                for (var i = 0; i < notifications.length; i++) {
-                    switch (notifications[i].name) {
-                        case 'task_progress':
-                            set_task_progress(
-                            notifications[i].data.task_id,
-                            notifications[i].data.progress);
-                        break;
-                    }
-                    since = notifications[i].timestamp;
-                }
-            }
-            );
-        }, 10000);
-    });
-    {% endif %}
-
-    function set_task_progress(task_id, progress) {
-        $('#' + task_id + '-progress').text(progress);
-    }
+  function set_task_progress(task_id, progress) {
+      $('#' + task_id + '-progress').text(progress);
+  }
 </script>
-{% endblock %}

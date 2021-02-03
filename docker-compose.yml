@@ -128,6 +128,7 @@ services:
     restart: always
 
   metabase-app:
+    container_name: metabase
     image: metabase/metabase
     restart: always
     ports:
@@ -142,6 +143,25 @@ services:
       MB_DB_PASS: ${POSTGRES_PASSWORD}
       MB_DB_HOST: db
       JAVA_TOOL_OPTIONS: "-Xmx512M"
+    depends_on:
+      - db
+    networks:
+      - alpine-net
+    deploy:
+      resources:
+        limits:
+          cpus: "0.20"
+
+  adminer:
+    container_name: adminer
+    image: adminer:latest
+    restart: always
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+      ADMINER_DEFAULT_DB_DRIVER: pgsql
+      ADMINER_DESIGN: pepe-linha
+    ports:
+      - 8080:8080
     depends_on:
       - db
     networks:

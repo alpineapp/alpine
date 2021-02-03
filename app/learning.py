@@ -1,17 +1,29 @@
+from typing import List
+from datetime import datetime, timedelta
+
 from flask_login import current_user
+from flask import current_app
 
-from app.models import Card
+from app.models import Card, LearningSessionFact
+from app import db
 
-AVG_CARD_DURATION_IN_SEC = 60
+AVG_CARD_DURATION_SEC = 60
+SESSION_EXPIRE_HOUR = 24
 
 
 class LearningHelper:
-    def __init__(self, num_random_learned, learn_date, deck_id=None):
+    def __init__(
+        self,
+        num_random_learned=0,
+        learn_date=datetime.today(),
+        deck_id=None,
+        user=current_user,
+    ):
+        self.user = user
         self.num_random_learned = num_random_learned
         self.learn_date = learn_date
-        self.results = None
         self.deck_id = deck_id
-        self.user_cards = current_user.cards
+        self.user_cards = user.cards
         if deck_id:
             self.user_cards = self.user_cards.filter(Card.deck_id == deck_id)
 
@@ -19,59 +31,182 @@ class LearningHelper:
         self.stats = {
             "num_total": None,
             "num_minutes": None,
-            "num_makeup": None,
-            "num_fail": 0,
-            "num_ok": 0,
-            "fail_cards": [],
-            "success_cards": [],
         }
-        self.cursor = 0
+        self.current_ls_id = None
+        self.ls_facts = []
 
-    def collect_tasks_makeup(self):
+    def load_new_session(self):
+        """Get cards to learn today
+
+        Args:
+            learn_date ([date, string], optional): target learning date. Defaults
+                to today.
+            num_random (int, optional): number of random complete cards to
+                relearn today. Defaults to 5.
+
+        Returns:
+            [List[int]]: list of card ids
+        """
+        current_app.logger.info(f"uid {self.user.id}: Loading new Learning Session...")
+        self._collect_tasks_makeup()
+        self._collect_tasks_today()
+        self._collect_random_learned()
+        self._build()
+        return self
+
+    def load_current_session(self):
+        ls_id = self.user.current_ls_id
+        self.current_ls_id = ls_id
+        self.ls_facts = LearningSessionFact.query.filter_by(ls_id=ls_id).all()
+        ls_facts_left = [lsf for lsf in self.ls_facts if lsf.complete_at is None]
+        self.stats = {
+            "num_total": len(ls_facts_left),
+            "num_minutes": self._calc_duration(len(ls_facts_left)),
+        }
+        self.cards = [lsf.card for lsf in self.ls_facts]
+
+    def init_session(self, write_new_session=False):
+        last_session_status = self.get_last_session_status()
+        current_app.logger.info(
+            f"uid {self.user.id}: last_session_status = {last_session_status}"
+        )
+        if last_session_status in [
+            "complete",
+            "expire",
+        ]:
+            self.load_new_session()
+            if write_new_session:
+                self._write_new_session()
+        elif last_session_status in ["still"]:
+            self.load_current_session()
+        return self
+
+    def get_last_session_status(self):
+        ls_id = self.user.current_ls_id
+        if (
+            ls_id is None
+            or self.user.ls_facts.first() is None
+            or self._session_complete(ls_id)
+        ):
+            return "complete"
+        if self._session_expire(ls_id):
+            return "expire"
+        else:
+            return "still"
+
+    def get_current_lsf(self):
+        ls_id = self.user.current_ls_id
+        lsf_query = LearningSessionFact.query.filter_by(ls_id=ls_id)
+        current_lsf = (
+            lsf_query.filter_by(is_ok=None)
+            .order_by(LearningSessionFact.number.asc())
+            .first()
+        )
+        current_app.logger.info(f"user ls_id: {ls_id}")
+        return current_lsf
+
+    @staticmethod
+    def handle_fail(lsf: LearningSessionFact):
+        card = lsf.card
+        card.bucket = max(1, card.bucket - 1)
+        card.next_date = datetime.utcnow().date()
+        lsf.is_ok = False
+
+    @staticmethod
+    def handle_ok(lsf: LearningSessionFact):
+        card = lsf.card
+        card.bucket = min(6, card.bucket + 1)
+        LearningHelper._set_card_next_date(card)
+        lsf.is_ok = True
+
+    def get_cards(self, status: str) -> List[LearningSessionFact]:
+        """List all the data
+
+        Args:
+            status (str): {success, fail}
+        """
+        lsf_query = LearningSessionFact.query.filter_by(ls_id=self.current_ls_id)
+        if status == "success":
+            cards = lsf_query.filter_by(is_ok=True)
+        elif status == "fail":
+            cards = lsf_query.filter_by(is_ok=False)
+        return cards.all()
+
+    @staticmethod
+    def _set_card_next_date(card: Card):
+        if card.bucket >= 6:
+            card.next_date = None
+            return
+        plus_next_day = card._get_day_from_bucket(card.bucket)
+        if plus_next_day is not None:
+            # If make-up card then set next learn date based on today
+            _date = max(card.next_date.date(), datetime.utcnow().date())
+            card.next_date = _date + timedelta(days=plus_next_day)
+        else:
+            card.next_date = None
+
+    @staticmethod
+    def _session_complete(ls_id: int) -> bool:
+        lsf_query = LearningSessionFact.query.filter_by(ls_id=ls_id)
+        last_ls_fact_created = lsf_query.order_by(LearningSessionFact.id.desc()).first()
+        if last_ls_fact_created.complete_at is not None:
+            return True
+
+    @staticmethod
+    def _session_expire(ls_id: int) -> bool:
+        lsf_query = LearningSessionFact.query.filter_by(ls_id=ls_id)
+        last_ls_fact_complete = lsf_query.order_by(
+            LearningSessionFact.complete_at.desc()
+        ).first()
+        if last_ls_fact_complete.complete_at:
+            begin_time = last_ls_fact_complete.complete_at
+        else:
+            begin_time = last_ls_fact_complete.created_at
+        expire_at = begin_time + timedelta(hours=SESSION_EXPIRE_HOUR)
+        is_expire = datetime.utcnow() > expire_at
+        return is_expire
+
+    def _collect_tasks_makeup(self):
         cards = self.user_cards.filter(Card.next_date < self.learn_date).all()
         self.cards.extend(cards)
-        self.stats["num_makeup"] = len(cards)
 
-    def collect_tasks_today(self):
+    def _collect_tasks_today(self):
         cards = self.user_cards.filter(Card.next_date == self.learn_date).all()
         self.cards.extend(cards)
 
-    def collect_random_learned(self):
+    def _collect_random_learned(self):
         pass
 
-    def build(self):
+    def _build(self):
         self.cards = sorted(self.cards, key=lambda x: x.id)
         self.stats["num_total"] = len(self.cards)
-        self.stats["num_minutes"] = self._calc_duration()
-        pass
+        self.stats["num_minutes"] = self._calc_duration(len(self.cards))
 
-    def handle_fail(self, card):
-        self.stats["num_fail"] += 1
-        self.stats["fail_cards"].append(card.id)
+        # build LearningSessionFact
+        current_ls_id = self.user.current_ls_id if self.user.current_ls_id else 0
+        new_ls_id = current_ls_id + 1
+        self.current_ls_id = new_ls_id
+        created_at = datetime.utcnow()
+        self.ls_facts = [
+            LearningSessionFact(
+                ls_id=new_ls_id,
+                user_id=self.user.id,
+                created_at=created_at,
+                card=card,
+                number=number,
+            )
+            for number, card in enumerate(self.cards)
+        ]
+        return self
 
-    def handle_ok(self, card):
-        self.stats["num_ok"] += 1
-        self.stats["success_cards"].append(card.id)
+    @staticmethod
+    def _calc_duration(num_cards):
+        return num_cards * AVG_CARD_DURATION_SEC / 60
 
-    def get_current_card(self):
-        if self.cursor < len(self.cards):
-            return self.cards[self.cursor]
-
-    def get_cards(self, type: str):
-        return [Card.query.get(card_id) for card_id in self.stats[f"{type}_cards"]]
-
-    def serialize(self):
-        return {
-            "card_ids": [card.id for card in self.cards],
-            "cursor": self.cursor,
-            "stats": self.stats,
-        }
-
-    def deserialize(self, dictionary):
-        card_ids = dictionary["card_ids"]
-        self.cards = Card.query.filter(Card.id.in_(card_ids)).order_by(Card.id).all()
-        self.cursor = dictionary["cursor"]
-        self.stats = dictionary["stats"]
-
-    def _calc_duration(self):
-        return self.stats["num_total"] * AVG_CARD_DURATION_IN_SEC / 60
+    def _write_new_session(self):
+        self.user.set_current_ls_id(self.current_ls_id)
+        current_app.logger.info(f"self.user.current_ls_id: {self.user.current_ls_id}")
+        db.session.add(self.user)
+        db.session.add_all(self.ls_facts)
+        db.session.commit()
+        return self
