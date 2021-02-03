@@ -65,7 +65,7 @@ class LearningHelper:
         }
         self.cards = [lsf.card for lsf in self.ls_facts]
 
-    def get_current_session(self, write_new_session=False):
+    def init_session(self, write_new_session=False):
         last_session_status = self.get_last_session_status()
         current_app.logger.info(
             f"uid {self.user.id}: last_session_status = {last_session_status}"
@@ -105,14 +105,18 @@ class LearningHelper:
         current_app.logger.info(f"user ls_id: {ls_id}")
         return current_lsf
 
-    def handle_fail(self, lsf: LearningSessionFact, card: Card):
+    @staticmethod
+    def handle_fail(lsf: LearningSessionFact):
+        card = lsf.card
         card.bucket = max(1, card.bucket - 1)
         card.next_date = datetime.utcnow().date()
         lsf.is_ok = False
 
-    def handle_ok(self, lsf: LearningSessionFact, card: Card):
+    @staticmethod
+    def handle_ok(lsf: LearningSessionFact):
+        card = lsf.card
         card.bucket = min(6, card.bucket + 1)
-        self._set_card_next_date(card)
+        LearningHelper._set_card_next_date(card)
         lsf.is_ok = True
 
     def get_cards(self, status: str) -> List[LearningSessionFact]:
@@ -128,7 +132,8 @@ class LearningHelper:
             cards = lsf_query.filter_by(is_ok=False)
         return cards.all()
 
-    def _set_card_next_date(self, card: Card):
+    @staticmethod
+    def _set_card_next_date(card: Card):
         if card.bucket >= 6:
             card.next_date = None
             return

@@ -386,5 +386,16 @@ class LearningSessionFact(db.Model):
     is_ok = db.Column(db.Boolean)
     number = db.Column(db.Integer, nullable=False)
 
-    def get_card(self):
-        return self.card
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "ls_id": self.ls_id,
+            "user_id": self.user_id,
+            "card_id": self.card_id,
+            "created_at": self.created_at,
+            "start_at": self.start_at,
+            "complete_at": self.complete_at,
+            "is_ok": self.is_ok,
+            "number": self.number,
+        }
+        return data

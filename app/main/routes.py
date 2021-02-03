@@ -26,7 +26,7 @@ from app.main.forms import (
     LearningForm,
     DeckForm,
 )
-from app.models import Card, Notification, Deck
+from app.models import Card, Notification, Deck, LearningSessionFact
 from app.learning import LearningHelper
 
 
@@ -344,7 +344,7 @@ def delete_deck(deck_id):
 @login_required
 def get_current_stats():
     lh = LearningHelper(user=current_user)
-    lh.get_current_session(write_new_session=False)
+    lh.init_session(write_new_session=False)
     return lh.stats
 
 
@@ -359,7 +359,7 @@ def before_learning():
             deck_id=None,
             user=current_user,
         )
-        lh.get_current_session(write_new_session=True)
+        lh.init_session(write_new_session=True)
         return redirect(url_for("main.learning"))
     start_form.learn_date.data = datetime.today()
     return render_template(
@@ -372,29 +372,35 @@ def before_learning():
 @bp.route("/learning", methods=["GET", "POST"])
 @login_required
 def learning():
-    lh = LearningHelper(user=current_user)
-    lh.get_current_session(write_new_session=False)
-    lsf = lh.get_current_lsf()
-    lsf.start_at = datetime.utcnow()
-    db.session.add(lsf)
-    db.session.commit()
-    card = lsf.card
     form = LearningForm()
-    if form.validate_on_submit():
-        if request.form["button"] == "fail":
-            lh.handle_fail(lsf, card)
-        elif request.form["button"] == "ok":
-            lh.handle_ok(lsf, card)
-        lsf.complete_at = datetime.utcnow()
-        db.session.add_all([lsf, card])
-        db.session.commit()
+    lh = LearningHelper(user=current_user)
+    lh.load_current_session()
     lsf = lh.get_current_lsf()
     if lsf is None:
         return render_template("end_learning.html", lh=lh)
+    lsf.start_at = datetime.utcnow()
+    db.session.add(lsf)
+    db.session.commit()
     return render_template(
         "learning.html",
         form=form,
-        card=lsf.card,
+        lsf=lsf,
         size=len(lh.cards),
         cursor=lsf.number,
     )
+
+
+@bp.route("/update_lsf_status", methods=["PUT"])
+@login_required
+def update_lsf_status():
+    is_ok = request.args.get("is_ok", type=int)
+    lsf_id = request.args.get("lsf_id", type=int)
+    lsf = LearningSessionFact.query.get(lsf_id)
+    if is_ok:
+        LearningHelper.handle_ok(lsf)
+    else:
+        LearningHelper.handle_fail(lsf)
+    lsf.complete_at = datetime.utcnow()
+    db.session.add_all([lsf, lsf.card])
+    db.session.commit()
+    return lsf.to_dict()
