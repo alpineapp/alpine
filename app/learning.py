@@ -1,5 +1,6 @@
 from typing import List
 from datetime import datetime, timedelta
+import random
 
 from flask_login import current_user
 from flask import current_app
@@ -173,7 +174,7 @@ class LearningHelper:
         pass
 
     def _build(self):
-        self.cards = sorted(self.cards, key=lambda x: x.id)
+        random.shuffle(self.cards)
         self.stats["num_total"] = len(self.cards)
         self.stats["num_minutes"] = self._calc_duration(len(self.cards))
 
