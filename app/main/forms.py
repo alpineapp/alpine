@@ -44,8 +44,9 @@ class EmptyForm(FlaskForm):
 
 
 class BeforeLearningForm(FlaskForm):
-    num_random_learned = IntegerField("Relearn", default=5)
-    learn_date = DateField("Target Date", format="%Y-%m-%d")
+    num_random_learned = IntegerField(
+        "Number of random completed cards to learn again", default=5
+    )
     submit = SubmitField("Start")
 
 
