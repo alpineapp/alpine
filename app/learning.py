@@ -1,5 +1,6 @@
 from typing import List
 from datetime import datetime, timedelta
+import random
 
 from flask_login import current_user
 from flask import current_app
@@ -48,7 +49,6 @@ class LearningHelper:
             [List[int]]: list of card ids
         """
         current_app.logger.info(f"uid {self.user.id}: Loading new Learning Session...")
-        self._collect_tasks_makeup()
         self._collect_tasks_today()
         self._collect_random_learned()
         self._build()
@@ -166,19 +166,15 @@ class LearningHelper:
         is_expire = datetime.utcnow() > expire_at
         return is_expire
 
-    def _collect_tasks_makeup(self):
-        cards = self.user_cards.filter(Card.next_date < self.learn_date).all()
-        self.cards.extend(cards)
-
     def _collect_tasks_today(self):
-        cards = self.user_cards.filter(Card.next_date == self.learn_date).all()
+        cards = self.user_cards.filter(Card.next_date <= self.learn_date).all()
         self.cards.extend(cards)
 
     def _collect_random_learned(self):
         pass
 
     def _build(self):
-        self.cards = sorted(self.cards, key=lambda x: x.id)
+        random.shuffle(self.cards)
         self.stats["num_total"] = len(self.cards)
         self.stats["num_minutes"] = self._calc_duration(len(self.cards))
 

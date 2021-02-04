@@ -355,13 +355,12 @@ def before_learning():
     if start_form.validate_on_submit() and request.form["mode"] == "start":
         lh = LearningHelper(
             num_random_learned=start_form.num_random_learned.data,
-            learn_date=start_form.learn_date.data,
+            learn_date=datetime.today(),
             deck_id=None,
             user=current_user,
         )
         lh.init_session(write_new_session=True)
         return redirect(url_for("main.learning"))
-    start_form.learn_date.data = datetime.today()
     return render_template(
         "before_learning.html",
         start_form=start_form,

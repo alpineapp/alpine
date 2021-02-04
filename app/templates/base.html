@@ -12,7 +12,6 @@
   {% if current_user.is_authenticated %}
   <a class="btn btn-primary mr-3" href="{{ url_for('main.before_learning') }}">
     Learn
-    <span id="today_cards_count" class="badge badge-light"></span>
   </a>
   {% endif %}
   <button
@@ -27,7 +26,7 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <a class="btn btn-outline-dark mr-3" href="{{ url_for('main.deck') }}">
+    <a class="btn btn-primary mr-3" href="{{ url_for('main.deck') }}">
       {% include 'icons/deck.html' %} My Decks
     </a>
     {% if g.search_form %}
@@ -113,18 +112,6 @@
   })
 
   {% if current_user.is_authenticated %}
-  $(function set_today_cards_count() {
-      $.ajax('{{ url_for("main.get_current_stats") }}').done(
-          function (lh_stats) {
-              const today_cards_count = lh_stats['num_total'] !== null ? lh_stats['num_total'] : 0;
-              $('#today_cards_count').text(today_cards_count);
-          }
-      ).fail(
-          function () {
-              $('#today_cards_count').text(0);
-          }
-      );
-  })
 
   $(function () {
       var since = 0;
