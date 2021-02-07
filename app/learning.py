@@ -108,7 +108,7 @@ class LearningHelper:
     @staticmethod
     def handle_fail(lsf: LearningSessionFact):
         card = lsf.card
-        card.bucket = max(1, card.bucket - 1)
+        card.bucket = 1
         card.next_date = datetime.utcnow().date()
         lsf.is_ok = False
 
