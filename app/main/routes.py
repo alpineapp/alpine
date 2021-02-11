@@ -205,8 +205,7 @@ def create_card(deck_id):
         return redirect(url_for("main.deck_profile", deck_id=deck.id))
     elif request.method == "GET":
         form.next_date.data = datetime.today()
-        form.deck.data = deck.name
-    return render_template("create_card.html", form=form)
+    return render_template("create_card.html", form=form, deck=deck)
 
 
 @bp.route("/card/<card_id>/edit_card", methods=["GET", "POST"])
@@ -403,3 +402,12 @@ def update_lsf_status():
     db.session.add_all([lsf, lsf.card])
     db.session.commit()
     return lsf.to_dict()
+
+
+@bp.route("/get_user_decks", methods=["GET"])
+@login_required
+def get_user_decks():
+    decks = current_user.decks.order_by(Deck.timestamp.desc()).all()
+    names = [deck.name for deck in decks]
+    result = {"data": names}
+    return result

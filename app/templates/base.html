@@ -79,23 +79,105 @@
 
 <script>
   $(document).ready(function () {
+    $(".truncate-overflow").each(function (index, element) {
+        // Truncate to only 2 lines
+        $clamp(element, { clamp: 2 });
+    });
 
-      $(".truncate-overflow").each(function (index, element) {
-          // Truncate to only 2 lines
-          $clamp(element, { clamp: 2 });
-      });
+    // User Decks retrieval
+    let userDecks = new Array();
+    let userDecksRaw;
+    function getUserDecks() {
+      $.ajax({
+        url:
+          "{{ url_for('main.get_user_decks') }}",
+        type: "GET",
+      })
+        .done(function (data) {
+          userDecksRaw = new Set(data['data']);
+          for (const deckName of userDecksRaw) {
+            const newOption = new Option(deckName, deckName);
+            userDecks.push(newOption);
+          }
+          markSelectedDeck();
+        })
+        .fail(function () {
+          console.log(
+            "Can not get user decks"
+          );
+        });
+    }
+    getUserDecks();
 
-      //     // executes when HTML-Document is loaded and DOM is ready
-      //     console.log("document is ready");
+    function markSelectedDeck() {
+      // Mark selected deck if add card from a specific deck
+      if ($("#selectedDeck").length) {
+        for (i = 0; i < userDecks.length; i++) {
+          var deckOption = userDecks[i];
+          if ($("#selectedDeck").prop('value') == deckOption.value) {
+            userDecks.splice(i, 1);
+          }
+        }
+      }
+    }
 
-      //     $( ".card" ).hover(
-      //         function() {
-      //             $(this).addClass('shadow-lg').css('cursor', 'pointer');
-      //         }, function() {
-      //             $(this).removeClass('shadow-lg');
-      //         }
-      //     );
-      //     // document ready
+    // Update deck select options with live search
+    let typingTimer;
+    let addNewOptionTypingInterval = 500;
+    let newOption = null;
+
+    function addNewOptionTyping () {
+      var deckInput = $("#deck-div .bs-searchbox input");
+      // Check if searchbox return no result
+      var numberOfActiveItems = deckInput.closest(".dropdown-menu").find("li.active").length;
+      if (numberOfActiveItems > 0) return;
+      // If no result then temporarily remove all the current options so that new option can be added
+      $("#deck").empty();
+      sel = document.getElementById('deck');
+      const input = deckInput.val();
+      newOption = new Option(input, input);
+      sel.add(newOption);
+      $('#deck').selectpicker('refresh');
+    }
+
+    function handleNewOption() {
+      // If newOption is selected then enlist to userDecks else remove
+      if (newOption === null) return;
+      var flag = false;
+      const values = $("#deck").val();
+      for (const value of values) {
+        if (value == newOption.value) {
+          userDecks.unshift(newOption);
+          flag = true;
+          break;
+        }
+      }
+      if (!flag) {
+        deckOptionElement = $(`#deck option[value='${newOption.value}']`);
+        deckOptionElement.remove();
+      }
+      newOption = null;
+    }
+
+    $(document).on('keyup', '#deck-div .bs-searchbox input', function(e) {
+      // Update newOption value on typing, but wait for user stop typing for sometime
+      // then trigger
+      var deckInput = $("#deck-div .bs-searchbox input").val();
+      clearTimeout(typingTimer);
+      if (deckInput) {
+          typingTimer = setTimeout(addNewOptionTyping, addNewOptionTypingInterval);
+      }
+    });
+
+    $(document).on('focus', '#deck-div .bs-searchbox input', function(e) {
+      // When enter input do load new deck options followed by database decks
+      handleNewOption();
+      sel = document.getElementById('deck');
+      $.each(userDecks, function(i, option) {
+        sel.add(option);
+      })
+      $('#deck').selectpicker('refresh');
+    })
   });
 
   $('.tinymce-display').each(function () {
