@@ -111,6 +111,8 @@ class User(UserMixin, db.Model):
     tasks = db.relationship("Task", backref="user", lazy="dynamic")
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
+    ls_facts = db.relationship("LearningSessionFact", backref="user", lazy="dynamic")
+    current_ls_id = db.Column(db.Integer)
 
     def __repr__(self):
         return "<User {}>".format(self.username)
@@ -206,6 +208,9 @@ class User(UserMixin, db.Model):
             return None
         return user
 
+    def set_current_ls_id(self, current_ls_id: int):
+        self.current_ls_id = current_ls_id
+
 
 class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ["name"]
@@ -260,6 +265,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"))
     next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
+    ls_facts = db.relationship("LearningSessionFact", backref="card", lazy="dynamic")
 
     def get_deck_name(self):
         if self.deck_id:
@@ -277,26 +283,6 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             display_str = f"{self.front[:self.MAX_CHAR_FRONT]}..."
             return display_str
         return self.front
-
-    def set_next_date(self):
-        if self.bucket >= 6:
-            self.next_date = None
-            return
-        plus_next_day = self._get_day_from_bucket(self.bucket)
-        if plus_next_day is not None:
-            # If mark-up card then set next learn date based on today
-            _date = max(self.next_date.date(), datetime.utcnow().date())
-            self.next_date = _date + timedelta(days=plus_next_day)
-        else:
-            self.next_date = None
-
-    def handle_fail(self):
-        self.bucket = max(1, self.bucket - 1)
-        self.next_date = datetime.utcnow().date()
-
-    def handle_ok(self):
-        self.bucket = min(6, self.bucket + 1)
-        self.set_next_date()
 
     def __repr__(self):
         return f"<Deck {self.get_deck_name()} - Card {self.front}>"
@@ -380,3 +366,36 @@ class Task(db.Model):
     def get_progress(self):
         job = self.get_rq_job()
         return job.meta.get("progress", 0) if job is not None else 100
+
+
+class LearningSessionFact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    # ls_id to be manually defined as auto-incremented in batch
+    # For example, current model have max(ls_id) = 10 then the next 5 cards of a
+    # new learning session will all have ls_id = 11
+    ls_id = db.Column(db.Integer, nullable=False, index=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, index=True
+    )
+    card_id = db.Column(
+        db.Integer, db.ForeignKey("card.id"), nullable=False, index=True
+    )
+    created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    start_at = db.Column(db.DateTime)
+    complete_at = db.Column(db.DateTime)
+    is_ok = db.Column(db.Boolean)
+    number = db.Column(db.Integer, nullable=False)
+
+    def to_dict(self):
+        data = {
+            "id": self.id,
+            "ls_id": self.ls_id,
+            "user_id": self.user_id,
+            "card_id": self.card_id,
+            "created_at": self.created_at,
+            "start_at": self.start_at,
+            "complete_at": self.complete_at,
+            "is_ok": self.is_ok,
+            "number": self.number,
+        }
+        return data

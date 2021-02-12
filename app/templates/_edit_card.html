@@ -1,67 +1,74 @@
 {% import 'bootstrap/form.html' as wtf %}
 
 <form action="" method="post">
-    {{ form.hidden_tag() }}
-    {% with error = form.errors %}
-    {% if error %}
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {{ form.hidden_tag() }} {% with error = form.errors %} {% if error %}
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {% endif %} {% endwith %}
+  <input id="submitButton" type="hidden" name="mode" value="submit" />
+  <div class="form-group">
+    <label for="frontLabel">{{ form.front.label }}</label>
+    {{ form.front(rows=1, placeholder='study', class='form-control') }}
+  </div>
+  <div class="form-group">
+    <label for="backLabel">{{ form.back.label }}</label>
+    {{ form.back(rows=10, placeholder='look at closely in order to observe or
+    read', class='form-control, tinymce-editor') }}
+  </div>
+  <div class="row form-row">
+    <div class="form-group col-md-3">
+      <label>{{ form.deck.label.text }}</label>
+      {{ form.deck(class='form-control') }}
+    </div>
+    <div class="form-group col-md-2">
+      <label>{{ form.next_date.label.text }}</label>
+      {{ form.next_date(class='form-control') }}
+    </div>
+    {% if mode == 'edit' %}
+    <div class="form-group col-sm-1">
+      <label>{{ form.bucket.label.text }}</label>
+      {{ form.bucket(class='form-control') }}
+    </div>
     {% endif %}
-    {% endwith %}
-    <input id="submitButton" type="hidden" name="mode" value="submit">
-    <div class='form-group'>
-        <label for="frontLabel">{{ form.front.label }}</label>
-        {{ form.front(rows=1, placeholder='study', class='form-control') }}
+  </div>
+  <div class="row form-row">
+    <div class="form-group col-md-3">
+      {{ form.submit(class='btn btn-primary w-100') }}
     </div>
-    <div class="form-group">
-        <label for="backLabel">{{ form.back.label }}</label>
-        {{ form.back(rows=10, placeholder='look at closely in order to observe or read',
-                      class='form-control, tinymce-editor') }}
+    <div class="col-md-3">
+      <button
+        type="button"
+        class="btn btn-danger w-100"
+        data-toggle="modal"
+        data-target="#deleteModal"
+      >
+        Delete your card
+      </button>
     </div>
-    <div class="row form-row">
-        <div class='form-group col-md-3'>
-        <label>{{ form.deck.label.text }}</label>
-            {{ form.deck(class='form-control') }}
-        </div>
-        <div class='form-group col-md-2'>
-            <label>{{ form.next_date.label.text }}</label>
-            {{ form.next_date(class='form-control') }}
-        </div>
-        {% if mode == 'edit' %}
-        <div class='form-group col-sm-1'>
-            <label>{{ form.bucket.label.text }}</label>
-            {{ form.bucket(class='form-control') }}
-        </div>
-        {% endif %}
-    </div>
-    <div class="row form-row">
-        <div class="form-group col-md-3">
-            {{ form.submit(class='btn btn-primary w-100') }}
-        </div>
-        <div class="col-md-3">
-            <button type='button' class='btn btn-danger w-100' data-toggle='modal' data-target='#deleteModal'>
-                Delete your card
-            </button>
-        </div>
-    </div>
+  </div>
 </form>
 <!-- Modal -->
 <div id="deleteModal" class="modal fade" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure to delete this card?</p>
-            </div>
-            <div class="modal-footer">
-                <form action="{{ url_for('main.delete_card', card_id=card.id) }}">
-                    <button class="btn btn-danger" type="submit">Delete</button>
-                </form>
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirm Delete</h5>
+        <button
+          type="button"
+          class="close"
+          data-dismiss="modal"
+          aria-label="Close"
+        >
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure to delete this card?</p>
+      </div>
+      <div class="modal-footer">
+        <form action="{{ url_for('main.delete_card', card_id=card.id) }}">
+          <button class="btn btn-danger" type="submit">Delete</button>
+        </form>
+      </div>
     </div>
+  </div>
 </div>

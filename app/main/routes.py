@@ -11,7 +11,6 @@ from flask import (
     jsonify,
     current_app,
     g,
-    session,
     abort,
 )
 from werkzeug.utils import secure_filename
@@ -24,11 +23,10 @@ from app.main.forms import (
     SearchForm,
     EmptyForm,
     BeforeLearningForm,
-    ClearLearningForm,
     LearningForm,
     DeckForm,
 )
-from app.models import Card, Notification, Deck
+from app.models import Card, Notification, Deck, LearningSessionFact
 from app.learning import LearningHelper
 
 
@@ -207,8 +205,7 @@ def create_card(deck_id):
         return redirect(url_for("main.deck_profile", deck_id=deck.id))
     elif request.method == "GET":
         form.next_date.data = datetime.today()
-        form.deck.data = deck.name
-    return render_template("create_card.html", form=form)
+    return render_template("create_card.html", form=form, deck=deck)
 
 
 @bp.route("/card/<card_id>/edit_card", methods=["GET", "POST"])
@@ -342,92 +339,75 @@ def delete_deck(deck_id):
         return redirect(url_for("main.index"))
 
 
-def get_cards_to_learn(deck_id=None, learn_date=None, num_random=5):
-    if learn_date is None:
-        learn_date = datetime.today()
-    lh = LearningHelper(num_random, learn_date, deck_id=deck_id)
-    lh.collect_tasks_makeup()
-    lh.collect_tasks_today()
-    lh.collect_random_learned()
-    lh.build()
-    return lh
-
-
-@bp.route("/today_cards")
+@bp.route("/get_current_stats")
 @login_required
-def today_cards():
-    if session.get("lh") is None:
-        lh = get_cards_to_learn()
-        session["lh"] = lh.serialize()
-        return lh.stats
-    else:
-        lh = session.get("lh")
-        return lh["stats"]
+def get_current_stats():
+    lh = LearningHelper(user=current_user)
+    lh.init_session(write_new_session=False)
+    return lh.stats
 
 
 @bp.route("/before_learning", methods=["GET", "POST"])
 @login_required
 def before_learning():
-    lh = get_cards_to_learn()
-    session["lh"] = lh.serialize()
     start_form = BeforeLearningForm()
-    clear_form = ClearLearningForm()
     if start_form.validate_on_submit() and request.form["mode"] == "start":
-        return redirect(
-            url_for(
-                "main.learning",
-                num_random_learned=start_form.num_random_learned.data,
-                learn_date=start_form.learn_date.data,
-                deck_id=None,
-            )
+        lh = LearningHelper(
+            num_random_learned=start_form.num_random_learned.data,
+            learn_date=datetime.today(),
+            deck_id=None,
+            user=current_user,
         )
-    elif clear_form.validate_on_submit() and request.form["mode"] == "clear":
-        session["lh"] = None
-        return redirect(url_for("main.index"))
-    start_form.learn_date.data = datetime.today()
+        lh.init_session(write_new_session=True)
+        return redirect(url_for("main.learning"))
     return render_template(
         "before_learning.html",
         start_form=start_form,
-        clear_form=clear_form,
-        lh_stats=lh.stats,
+        lh_stats=get_current_stats(),
     )
 
 
 @bp.route("/learning", methods=["GET", "POST"])
 @login_required
 def learning():
-    num_random_learned = request.args.get("num_random_learned", 5)
-    learn_date = request.args.get("learn_date", datetime.today())
-    deck_id = request.args.get("deck_id")
-    date_fmt = "%Y-%m-%d"
-    if isinstance(learn_date, str):
-        learn_date = datetime.strptime(learn_date, date_fmt)
-    lh = LearningHelper(num_random_learned, learn_date, deck_id)
-    if deck_id or not session.get("lh"):
-        lh = get_cards_to_learn(deck_id, learn_date, num_random_learned)
-        session["lh"] = lh.serialize()
-    lh_dict = session["lh"]
-    lh.deserialize(lh_dict)
-    card = lh.get_current_card()
-    if card is None:
-        session["lh"] = None
-        return render_template("end_learning.html", lh=lh)
     form = LearningForm()
-    if form.validate_on_submit():
-        if request.form["button"] == "fail":
-            card.handle_fail()
-            lh.handle_fail(card)
-        elif request.form["button"] == "ok":
-            card.handle_ok()
-            lh.handle_ok(card)
-        db.session.add(card)
-        db.session.commit()
-        lh.cursor += 1
-        session["lh"] = lh.serialize()
-        card = lh.get_current_card()
-        if card is None:
-            session["lh"] = None
-            return render_template("end_learning.html", lh=lh)
+    lh = LearningHelper(user=current_user)
+    lh.load_current_session()
+    lsf = lh.get_current_lsf()
+    if lsf is None:
+        return render_template("end_learning.html", lh=lh)
+    lsf.start_at = datetime.utcnow()
+    db.session.add(lsf)
+    db.session.commit()
     return render_template(
-        "learning.html", form=form, card=card, size=len(lh.cards), cursor=lh.cursor
+        "learning.html",
+        form=form,
+        lsf=lsf,
+        size=len(lh.cards),
+        cursor=lsf.number,
     )
+
+
+@bp.route("/update_lsf_status", methods=["PUT"])
+@login_required
+def update_lsf_status():
+    is_ok = request.args.get("is_ok", type=int)
+    lsf_id = request.args.get("lsf_id", type=int)
+    lsf = LearningSessionFact.query.get(lsf_id)
+    if is_ok:
+        LearningHelper.handle_ok(lsf)
+    else:
+        LearningHelper.handle_fail(lsf)
+    lsf.complete_at = datetime.utcnow()
+    db.session.add_all([lsf, lsf.card])
+    db.session.commit()
+    return lsf.to_dict()
+
+
+@bp.route("/get_user_decks", methods=["GET"])
+@login_required
+def get_user_decks():
+    decks = current_user.decks.order_by(Deck.timestamp.desc()).all()
+    names = [deck.name for deck in decks]
+    result = {"data": names}
+    return result

@@ -23,7 +23,7 @@ naming_convention = {
     "pk": "pk_%(table_name)s",
 }
 db = SQLAlchemy(metadata=MetaData(naming_convention=naming_convention))
-migrate = Migrate(db)
+migrate = Migrate(db, compare_type=True)
 login = LoginManager()
 login.login_view = "auth.login"
 mail = Mail()

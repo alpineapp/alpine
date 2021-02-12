@@ -1,13 +1,15 @@
 # Alpine Spaced Repetition Learing App
 
 ## Set up DEV environment
-For a new MacOS:
 ```
-python3 -m venv alpine
-source ./alpine/bin/activate
-pip install --upgrade pip # to install pip version 20.2.4
-pip install -r requirements.txt
+chmod -R +x scripts
+# Build environment with Docker
+./scripts/rebuild_docker.sh
 ```
+
+### Python Docstring Generator
+We use Google convention of Python Docstring.
+If you use VSCode, install `Python Docstring Generator` extension.
 
 ## Codebase format
 Please use flake8 as your linter.
