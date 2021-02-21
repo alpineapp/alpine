@@ -1,6 +1,6 @@
 from flask import jsonify, request, url_for, abort
 
-from app.models import Deck
+# from app.models import Deck
 from app.api import bp
 from app.api.auth import token_auth
 from app import db

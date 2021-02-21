@@ -40,16 +40,16 @@
         {{ card.back }}
       </p>
       <div class="d-flex justify-content-between align-items-center">
-        {% if deck is not defined %}
+        {% for tagging in card.tags.all() %}
         <div class="btn-group">
           <a
             class="btn btn-sm btn-outline-dark"
-            href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}"
+            href="{{ url_for('main.tag_profile', tag_id=tagging.tag_id) }}"
           >
-            {% include 'icons/deck.html' %} {{ card.deck.name }}
+            {% include 'icons/tag.html' %} {{ Tag.query.filter_by(id=tagging.tag_id).first().name }}
           </a>
         </div>
-        {% endif %}
+        {% endfor %}
         <div class="mr-auto"></div>
         <div class="flex-column">
           <small class="d-flex justify-content-start text-secondary mr-1">Mastery</small>

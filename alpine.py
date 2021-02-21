@@ -1,7 +1,7 @@
 import os
 
 from app import create_app, db
-from app.models import User, Card, Notification, Task, Deck
+from app.models import User, Card, Notification, Task, Tag, Tagging
 
 app = create_app()
 
@@ -15,8 +15,9 @@ def make_shell_context():
         "User": User,
         "Card": Card,
         "Notification": Notification,
-        "Deck": Deck,
+        "Tag": Tag,
         "Task": Task,
+        "Tagging": Tagging
     }
 
 

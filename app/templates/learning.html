@@ -25,9 +25,9 @@ if card is not none %}
       <h5>
         <a
           class="btn btn-sm btn-outline-dark"
-          href="{{ url_for('main.deck_profile', deck_id=card.deck.id) }}"
+          href="{{ url_for('main.tag_profile', tag_id=card.tags.first().id) }}"
         >
-          {% include 'icons/deck.html' %} {{ card.deck.name }}
+          {% include 'icons/tag.html' %} {{ card.tags.first().name }}
         </a>
       </h5>
       <div class="mr-auto"></div>

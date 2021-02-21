@@ -26,8 +26,8 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <a class="btn btn-primary mr-3" href="{{ url_for('main.deck') }}">
-      {% include 'icons/deck.html' %} My Decks
+    <a class="btn btn-primary mr-3" href="{{ url_for('main.tag') }}">
+      {% include 'icons/tag.html' %} Inventory
     </a>
     {% if g.search_form %}
     <div class="navbar-nav">
@@ -84,99 +84,99 @@
         $clamp(element, { clamp: 2 });
     });
 
-    // User Decks retrieval
-    let userDecks = new Array();
-    let userDecksRaw;
-    function getUserDecks() {
+    // User Tags retrieval
+    let userTags = new Array();
+    let userTagsRaw;
+    function getUserTags() {
       $.ajax({
         url:
-          "{{ url_for('main.get_user_decks') }}",
+          "{{ url_for('main.get_user_tags') }}",
         type: "GET",
       })
         .done(function (data) {
-          userDecksRaw = new Set(data['data']);
-          for (const deckName of userDecksRaw) {
-            const newOption = new Option(deckName, deckName);
-            userDecks.push(newOption);
+          userTagsRaw = new Set(data['data']);
+          for (const tagName of userTagsRaw) {
+            const newOption = new Option(tagName, tagName);
+            userTags.push(newOption);
           }
-          markSelectedDeck();
+          markSelectedTag();
         })
         .fail(function () {
           console.log(
-            "Can not get user decks"
+            "Can not get user tags"
           );
         });
     }
-    getUserDecks();
+    getUserTags();
 
-    function markSelectedDeck() {
-      // Mark selected deck if add card from a specific deck
-      if ($("#selectedDeck").length) {
-        for (i = 0; i < userDecks.length; i++) {
-          var deckOption = userDecks[i];
-          if ($("#selectedDeck").prop('value') == deckOption.value) {
-            userDecks.splice(i, 1);
+    function markSelectedTag() {
+      // Mark selected tag if add card from a specific tag
+      if ($("#selectedTag").length) {
+        for (i = 0; i < userTags.length; i++) {
+          var tagOption = userTags[i];
+          if ($("#selectedTag").prop('value') == tagOption.value) {
+            userTags.splice(i, 1);
           }
         }
       }
     }
 
-    // Update deck select options with live search
+    // Update tag select options with live search
     let typingTimer;
     let addNewOptionTypingInterval = 500;
     let newOption = null;
 
     function addNewOptionTyping () {
-      var deckInput = $("#deck-div .bs-searchbox input");
+      var tagInput = $("#tag-div .bs-searchbox input");
       // Check if searchbox return no result
-      var numberOfActiveItems = deckInput.closest(".dropdown-menu").find("li.active").length;
+      var numberOfActiveItems = tagInput.closest(".dropdown-menu").find("li.active").length;
       if (numberOfActiveItems > 0) return;
       // If no result then temporarily remove all the current options so that new option can be added
-      $("#deck").empty();
-      sel = document.getElementById('deck');
-      const input = deckInput.val();
+      $("#tag").empty();
+      sel = document.getElementById('tag');
+      const input = tagInput.val();
       newOption = new Option(input, input);
       sel.add(newOption);
-      $('#deck').selectpicker('refresh');
+      $('#tag').selectpicker('refresh');
     }
 
     function handleNewOption() {
-      // If newOption is selected then enlist to userDecks else remove
+      // If newOption is selected then enlist to userTags else remove
       if (newOption === null) return;
       var flag = false;
-      const values = $("#deck").val();
+      const values = $("#tag").val();
       for (const value of values) {
         if (value == newOption.value) {
-          userDecks.unshift(newOption);
+          userTags.unshift(newOption);
           flag = true;
           break;
         }
       }
       if (!flag) {
-        deckOptionElement = $(`#deck option[value='${newOption.value}']`);
-        deckOptionElement.remove();
+        tagOptionElement = $(`#tag option[value='${newOption.value}']`);
+        tagOptionElement.remove();
       }
       newOption = null;
     }
 
-    $(document).on('keyup', '#deck-div .bs-searchbox input', function(e) {
+    $(document).on('keyup', '#tag-div .bs-searchbox input', function(e) {
       // Update newOption value on typing, but wait for user stop typing for sometime
       // then trigger
-      var deckInput = $("#deck-div .bs-searchbox input").val();
+      var tagInput = $("#tag-div .bs-searchbox input").val();
       clearTimeout(typingTimer);
-      if (deckInput) {
+      if (tagInput) {
           typingTimer = setTimeout(addNewOptionTyping, addNewOptionTypingInterval);
       }
     });
 
-    $(document).on('focus', '#deck-div .bs-searchbox input', function(e) {
-      // When enter input do load new deck options followed by database decks
+    $(document).on('focus', '#tag-div .bs-searchbox input', function(e) {
+      // When enter input do load new tag options followed by database tags
       handleNewOption();
-      sel = document.getElementById('deck');
-      $.each(userDecks, function(i, option) {
+      sel = document.getElementById('tag');
+      $.each(userTags, function(i, option) {
         sel.add(option);
       })
-      $('#deck').selectpicker('refresh');
+      $('#tag').selectpicker('refresh');
     })
   });
 

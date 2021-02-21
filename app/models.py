@@ -104,7 +104,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    decks = db.relationship("Deck", backref="user", lazy="dynamic")
+    tags = db.relationship("Tag", backref="user", lazy="dynamic")
     cards = db.relationship("Card", backref="user", lazy="dynamic")
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
     notifications = db.relationship("Notification", backref="user", lazy="dynamic")
@@ -164,9 +164,9 @@ class User(UserMixin, db.Model):
     def get_task_in_progress(self, name):
         return Task.query.filter_by(name=name, user=self, complete=False).first()
 
-    def get_decks(self):
-        decks = self.decks.order_by(Deck.timestamp.desc()).all()
-        return decks
+    def get_tags(self):
+        tags = self.tags.all()
+        return tags
 
     def to_dict(self, include_email=False):
         data = {
@@ -174,7 +174,7 @@ class User(UserMixin, db.Model):
             "username": self.username,
             "last_seen": self.last_seen.isoformat() + "Z",
             "card_count": self.cards.count(),
-            "deck_count": self.decks.count(),
+            "tag_count": self.tags.count(),
             "_links": {"self": url_for("api.get_user", id=self.id)},
         }
         if include_email:
@@ -212,19 +212,65 @@ class User(UserMixin, db.Model):
         self.current_ls_id = current_ls_id
 
 
-class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
+# class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
+#     __searchable__ = ["name"]
+#     id = db.Column(db.Integer, primary_key=True)
+#     name = db.Column(db.String(256))
+#     description = db.Column(db.String(1024))
+#     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+#     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
+#     cards = db.relationship(
+#         "Card", backref="deck", lazy="dynamic", cascade="all, delete-orphan"
+#     )
+
+#     def __repr__(self):
+#         return "<Deck {}>".format(self.name)
+
+#     def preview_description(self):
+#         if self.description:
+#             return self.description
+#         else:
+#             return ""
+
+#     def get_cards(self):
+#         return self.cards.order_by(Card.timestamp.desc()).all()
+
+#     def to_dict(self):
+#         data = {
+#             "id": self.id,
+#             "name": self.name,
+#             "timestamp": self.timestamp.isoformat() + "Z",
+#             "user_id": self.user_id,
+#             "_links": {"self": url_for("api.get_deck", id=self.id)},
+#         }
+#         return data
+
+#     def from_dict(self, data):
+#         client_set_fields = ["name", "user_id"]
+#         for field in client_set_fields:
+#             if field in data:
+#                 setattr(self, field, data[field])
+#         setattr(self, "timestamp", datetime.utcnow())
+
+
+class Tagging(db.Model):
+    tag_id = db.Column(db.Integer, db.ForeignKey("tag.id"), primary_key=True)
+    card_id = db.Column(db.Integer, db.ForeignKey("card.id"), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Tag(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ["name"]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
-    description = db.Column(db.String(1024))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     cards = db.relationship(
-        "Card", backref="deck", lazy="dynamic", cascade="all, delete-orphan"
+        "Tagging", backref="tag", lazy="dynamic", cascade="all, delete-orphan"
     )
 
     def __repr__(self):
-        return "<Deck {}>".format(self.name)
+        return "<Tag {}>".format(self.name)
 
     def preview_description(self):
         if self.description:
@@ -233,7 +279,7 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
             return ""
 
     def get_cards(self):
-        return self.cards.order_by(Card.timestamp.desc()).all()
+        return self.cards.filter_by(tag_id=Tag.id).all()
 
     def to_dict(self):
         data = {
@@ -242,7 +288,7 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
             "card_ids": [card.id for card in self.get_cards()],
-            "_links": {"self": url_for("api.get_deck", id=self.id)},
+            "_links": {"self": url_for("api.get_tag", id=self.id)},
         }
         return data
 
@@ -263,7 +309,9 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     back = db.Column(db.String(1000))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-    deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"))
+    tags = db.relationship(
+        "Tagging", backref="card", lazy="dynamic", cascade="all, delete-orphan"
+    )
     next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
     learn_spaced_rep_id = db.Column(
@@ -276,10 +324,8 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         cascade="all, delete-orphan",
     )
 
-    def get_deck_name(self):
-        if self.deck_id:
-            deck_name = Deck.query.get(self.deck_id).name
-            return deck_name
+    def get_tags(self):
+        return self.tags.filter_by(card_id=Card.id).all()
 
     def preview_back(self):
         if len(self.back) > self.MAX_CHAR_BACK:
@@ -294,15 +340,14 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         return self.front
 
     def __repr__(self):
-        return f"<Deck {self.get_deck_name()} - Card {self.front}>"
+        return f"<Card {self.front}>"
 
     def to_dict(self):
+        # TODO: Add list of tags
         data = {
             "id": self.id,
             "front": self.front,
             "back": self.back,
-            "deck_id": self.deck_id,
-            "deck_name": self.deck.name,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
             "next_date": self.learn_spaced_rep.next_date,
@@ -316,7 +361,9 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "front",
             "back",
             "user_id",
-            "deck_id",
+            "tag_id",
+            "next_date",
+            "bucket",
         ]
         for field in client_set_fields:
             if field in data:
