@@ -27,7 +27,7 @@ class FlaskClientTestCase(unittest.TestCase):
         self.client.post(
             "/auth/login",
             data={"username": "admin", "password": "1"},
-            follow_redirects=True
+            follow_redirects=True,
         )
         deck = Deck(name="test", description="test body", user_id=user.id)
         db.session.add(deck)
@@ -38,7 +38,7 @@ class FlaskClientTestCase(unittest.TestCase):
             deck_id=deck.id,
             user_id=user.id,
             next_date=datetime.today(),
-            bucket=1
+            bucket=1,
         )
         db.session.add(card)
         db.session.commit()
@@ -80,26 +80,28 @@ class DeckTest(FlaskClientTestCase):
         response = self.client.post(
             "/deck",
             data={"name": "test", "description": "test description"},
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search("Your deck is added!", response.get_data(as_text=True)))
+        self.assertTrue(
+            re.search("Your deck is added!", response.get_data(as_text=True))
+        )
 
     def test_edit_deck(self):
         # Edit deck
         response = self.client.post(
             "/deck/edit_deck/1",
             data={"name": "test", "description": "test description 2"},
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search("Your deck is edited!", response.get_data(as_text=True)))
+        self.assertTrue(
+            re.search("Your deck is edited!", response.get_data(as_text=True))
+        )
 
     def test_delete_deck(self):
         # Delete deck
-        response = self.client.post(
-            "/deck/1/delete_deck"
-        )
+        response = self.client.post("/deck/1/delete_deck")
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Deck.query.all(), [])
 
@@ -115,12 +117,14 @@ class CardTest(FlaskClientTestCase):
                 "deck": "test",
                 "user_id": 1,
                 "next_date": "2021-02-14",
-                "bucket": 1
+                "bucket": 1,
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search("Your card is added!", response.get_data(as_text=True)))
+        self.assertTrue(
+            re.search("Your card is added!", response.get_data(as_text=True))
+        )
 
     def test_edit_card(self):
         response = self.client.post(
@@ -131,60 +135,72 @@ class CardTest(FlaskClientTestCase):
                 "deck": "test",
                 "next_date": "2021-02-14",
                 "bucket": 1,
-                "mode": "submit"
+                "mode": "submit",
             },
-            follow_redirects=True
+            follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(re.search("Your card is edited!", response.get_data(as_text=True)))
+        self.assertTrue(
+            re.search("Your card is edited!", response.get_data(as_text=True))
+        )
         self.assertEqual(Card.query.first().front, "test edit")
 
     def test_delete_card(self):
-        self.client.post(
-            "card/1/delete_card"
-        )
+        self.client.post("card/1/delete_card")
         self.assertEqual(Card.query.all(), [])
 
 
 class LearnTest(FlaskClientTestCase):
     def test_before_learning(self):
-        response = self.client.post(
-            "/before_learning",
-            data={
-                "mode": "display"
-            },
-            follow_redirects=True
+        response = self.client.get("/before_learning")
+        num_learn = re.search(
+            """<span class="card-title h2">([0-9]+)<""",
+            response.get_data(as_text=True),
         )
-        self.assertTrue(re.search("""<span class="card-title h2">1</span><span class=\'text-secondary\'> cards</span>""", response.get_data(as_text=True)))
+        if num_learn:
+            num_learn = int(num_learn.group(1))
+        self.assertEqual(num_learn, 1)
 
     def test_first_card_learning(self):
         response = self.client.post(
-            "/before_learning",
-            data={
-                "mode": "start"
-            },
-            follow_redirects=True
+            "/before_learning", data={"mode": "start"}, follow_redirects=True
         )
         self.assertTrue(re.search("front test", response.get_data(as_text=True)))
 
     def test_next_card_learning_after_ok(self):
+        # DEV-53 For some reason if we include self.client.get('/before_learning')
+        # here like real flow then a duplicated lsf is created
         response = self.client.post(
-            "/learning",
-            data={
-                "button": "ok"
-            }
+            "/before_learning",
+            data={"mode": "start"},
+            follow_redirects=True,
         )
-        self.assertTrue(re.search("""<span class="card-title h2 text-success">1</span><span class=\'text-secondary\'> cards</span>""", response.get_data(as_text=True)))
+        response = self.client.put("/update_lsf_status?is_ok=1&lsf_id=1")
+        response = self.client.post("/learning", data={"button": "ok"})
+        num_success = re.search(
+            """<span class="card-title h2 text-success">([0-9]+)<""",
+            response.get_data(as_text=True),
+        )
+        if num_success is not None:
+            num_success = int(num_success.group(1))
+        self.assertEqual(num_success, 1)
         self.assertEqual(Card.query.first().bucket, 2)
 
     def test_next_card_learning_after_fail(self):
         response = self.client.post(
-            "/learning",
-            data={
-                "button": "fail"
-            }
+            "/before_learning",
+            data={"mode": "start"},
+            follow_redirects=True,
         )
-        self.assertTrue(re.search("""<span class="card-title h2 text-success">0</span><span class=\'text-secondary\'> cards</span>""", response.get_data(as_text=True)))
+        response = self.client.put("/update_lsf_status?is_ok=0&lsf_id=1")
+        response = self.client.post("/learning", data={"button": "fail"})
+        num_success = re.search(
+            """<span class="card-title h2 text-success">([0-9]+)<""",
+            response.get_data(as_text=True),
+        )
+        if num_success is not None:
+            num_success = int(num_success.group(1))
+        self.assertEqual(num_success, 0)
         self.assertEqual(Card.query.first().bucket, 1)
 
 
