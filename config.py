@@ -32,3 +32,12 @@ class Config(object):
     MAX_CONTENT_LENGTH = 1024 * 1024 * 5  # 5 MB
     UPLOAD_EXTENSIONS = [".jpg", ".png", ".gif"]
     UPLOAD_PATH = "static/uploads"
+
+
+class TestingConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    WTF_CSRF_ENABLED = False
+
+
+config = {"testing": TestingConfig, "default": Config}

@@ -36,4 +36,4 @@ jobs:
                --extend-ignore=E128,W503,W504,E402
     - name: Test with pytest
       run: |
-        python tests.py
+        python function_tests.py
