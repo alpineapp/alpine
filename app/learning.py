@@ -4,8 +4,9 @@ import random
 
 from flask_login import current_user
 from flask import current_app
+from sqlalchemy import func
 
-from app.models import Card, LearningSessionFact
+from app.models import Card, LearningSessionFact, LearnSpacedRepetition
 from app import db
 
 AVG_CARD_DURATION_SEC = 60
@@ -109,14 +110,14 @@ class LearningHelper:
     @staticmethod
     def handle_fail(lsf: LearningSessionFact):
         card = lsf.card
-        card.bucket = 1
-        card.next_date = datetime.utcnow().date()
+        card.learn_spaced_rep.bucket = 1
+        card.learn_spaced_rep.next_date = datetime.utcnow().date()
         lsf.is_ok = False
 
     @staticmethod
     def handle_ok(lsf: LearningSessionFact):
         card = lsf.card
-        card.bucket = min(6, card.bucket + 1)
+        card.learn_spaced_rep.bucket = min(6, card.learn_spaced_rep.bucket + 1)
         LearningHelper._set_card_next_date(card)
         lsf.is_ok = True
 
@@ -135,16 +136,20 @@ class LearningHelper:
 
     @staticmethod
     def _set_card_next_date(card: Card):
-        if card.bucket >= 6:
-            card.next_date = None
+        if card.learn_spaced_rep.bucket >= 6:
+            card.learn_spaced_rep.next_date = None
             return
-        plus_next_day = card._get_day_from_bucket(card.bucket)
+        plus_next_day = card.learn_spaced_rep._get_day_from_bucket(
+            card.learn_spaced_rep.bucket
+        )
         if plus_next_day is not None:
             # If make-up card then set next learn date based on today
-            _date = max(card.next_date.date(), datetime.utcnow().date())
-            card.next_date = _date + timedelta(days=plus_next_day)
+            _date = max(
+                card.learn_spaced_rep.next_date.date(), datetime.utcnow().date()
+            )
+            card.learn_spaced_rep.next_date = _date + timedelta(days=plus_next_day)
         else:
-            card.next_date = None
+            card.learn_spaced_rep.next_date = None
 
     @staticmethod
     def _session_complete(ls_id: int) -> bool:
@@ -168,7 +173,11 @@ class LearningHelper:
         return is_expire
 
     def _collect_tasks_today(self):
-        cards = self.user_cards.filter(Card.next_date <= self.learn_date).all()
+        cards = (
+            self.user_cards.join(LearnSpacedRepetition)
+            .filter(LearnSpacedRepetition.next_date <= self.learn_date)
+            .all()
+        )
         self.cards.extend(cards)
 
     def _collect_random_learned(self):
@@ -180,8 +189,13 @@ class LearningHelper:
         self.stats["num_minutes"] = self._calc_duration(len(self.cards))
 
         # build LearningSessionFact
-        current_ls_id = self.user.current_ls_id if self.user.current_ls_id else 0
-        new_ls_id = current_ls_id + 1
+        current_max_ls_id = db.session.query(
+            func.max(LearningSessionFact.ls_id)
+        ).scalar()
+        if current_max_ls_id:
+            new_ls_id = current_max_ls_id + 1
+        else:
+            new_ls_id = 0
         self.current_ls_id = new_ls_id
         created_at = datetime.utcnow()
         for number, card in enumerate(self.cards):

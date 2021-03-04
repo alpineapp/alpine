@@ -36,7 +36,7 @@
           </div>
         </div>
       </div>
-      <p class="card-text tinymce-display small" style="height: 150px">
+      <p class="cardBack card-text tinymce-display small" style="height: 150px">
         {{ card.back }}
       </p>
       <div class="d-flex justify-content-between align-items-center">
@@ -51,14 +51,14 @@
         </div>
         {% endif %}
         <div class="mr-auto"></div>
-        {% if card.next_date %}
-        <small class="text-muted mr-3"
-          >{{ card.next_date.strftime('%Y-%m-%d') }}</small
-        >
-        {% endif %}
-        <small class="text-muted"
-          >{% include 'icons/bucket.html' %} {{ card.bucket }}</small
-        >
+        <div class="flex-column">
+          <small class="d-flex justify-content-start text-secondary mr-1">Mastery</small>
+          <div class="d-flex">
+            {% with mastery_level = (card.learn_spaced_rep.bucket - 1) %}
+              {% include 'icons/mastery_level.html' %}
+            {% endwith %}
+          </div>
+        </div>
       </div>
     </div>
   </div>

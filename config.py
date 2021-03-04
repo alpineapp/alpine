@@ -32,6 +32,9 @@ class Config(object):
     MAX_CONTENT_LENGTH = 1024 * 1024 * 5  # 5 MB
     UPLOAD_EXTENSIONS = [".jpg", ".png", ".gif"]
     UPLOAD_PATH = "static/uploads"
+    # Persistent volume
+    DISK_PATH = os.environ.get("DISK_PATH")
+    SERVER_NAME = os.environ.get("SERVER_NAME")
 
 
 class TestingConfig(Config):

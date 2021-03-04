@@ -1,6 +1,6 @@
 import unittest
 from app import create_app, db
-from app.models import User, Deck, Card
+from app.models import User, Deck, Card, LearnSpacedRepetition
 import os
 import re
 from datetime import datetime
@@ -31,14 +31,19 @@ class FlaskClientTestCase(unittest.TestCase):
         )
         deck = Deck(name="test", description="test body", user_id=user.id)
         db.session.add(deck)
-        db.session.commit()
+        db.session.flush()
+        learn_spaced_rep = LearnSpacedRepetition(
+            next_date=datetime.today(),
+            bucket=1,
+        )
+        db.session.add(learn_spaced_rep)
+        db.session.flush()
         card = Card(
             front="front test",
             back="back test",
             deck_id=deck.id,
+            learn_spaced_rep_id=learn_spaced_rep.id,
             user_id=user.id,
-            next_date=datetime.today(),
-            bucket=1,
         )
         db.session.add(card)
         db.session.commit()
@@ -184,7 +189,7 @@ class LearnTest(FlaskClientTestCase):
         if num_success is not None:
             num_success = int(num_success.group(1))
         self.assertEqual(num_success, 1)
-        self.assertEqual(Card.query.first().bucket, 2)
+        self.assertEqual(Card.query.first().learn_spaced_rep.bucket, 2)
 
     def test_next_card_learning_after_fail(self):
         response = self.client.post(
@@ -201,7 +206,7 @@ class LearnTest(FlaskClientTestCase):
         if num_success is not None:
             num_success = int(num_success.group(1))
         self.assertEqual(num_success, 0)
-        self.assertEqual(Card.query.first().bucket, 1)
+        self.assertEqual(Card.query.first().learn_spaced_rep.bucket, 1)
 
 
 if __name__ == "__main__":

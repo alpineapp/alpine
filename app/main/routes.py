@@ -26,7 +26,13 @@ from app.main.forms import (
     LearningForm,
     DeckForm,
 )
-from app.models import Card, Notification, Deck, LearningSessionFact
+from app.models import (
+    Card,
+    Notification,
+    Deck,
+    LearningSessionFact,
+    LearnSpacedRepetition,
+)
 from app.learning import LearningHelper
 
 
@@ -72,14 +78,18 @@ def index():
         if not deck:
             deck = Deck(name=deck_name, user_id=current_user.id)
             db.session.add(deck)
-            db.session.flush()
+        learn_spaced_rep = LearnSpacedRepetition(
+            next_date=form.next_date.data,
+            bucket=form.bucket.data,
+        )
+        db.session.add(learn_spaced_rep)
+        db.session.flush()
         card = Card(
             front=form.front.data,
             back=form.back.data,
             user_id=current_user.id,
             deck_id=deck.id,
-            next_date=form.next_date.data,
-            bucket=form.bucket.data,
+            learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
         db.session.commit()
@@ -191,13 +201,18 @@ def create_card(deck_id):
         if form.deck.data != deck.name:
             flash("You entered a different deck!")
             return redirect(url_for("main.deck_profile", deck_id=deck.id))
+        learn_spaced_rep = LearnSpacedRepetition(
+            next_date=form.next_date.data,
+            bucket=form.bucket.data,
+        )
+        db.session.add(learn_spaced_rep)
+        db.session.flush()
         card = Card(
             front=form.front.data,
             back=form.back.data,
             deck_id=deck.id,
             user_id=current_user.id,
-            next_date=form.next_date.data,
-            bucket=form.bucket.data,
+            learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
         db.session.commit()
@@ -220,8 +235,8 @@ def edit_card(card_id):
         form.front.data = card.front
         form.back.data = card.back
         form.deck.data = card.deck.name
-        form.next_date.data = card.next_date
-        form.bucket.data = card.bucket
+        form.next_date.data = card.learn_spaced_rep.next_date
+        form.bucket.data = card.learn_spaced_rep.bucket
         return render_template("edit_card.html", card=card, form=form, mode="edit")
     if request.form["mode"] == "submit" and form.validate_on_submit():
         deck_name = form.deck.data or "Unnamed"
@@ -234,8 +249,8 @@ def edit_card(card_id):
         card.back = form.back.data
         card.deck_id = deck.id
         card.timestamp = datetime.utcnow()
-        card.next_date = form.next_date.data
-        card.bucket = form.bucket.data
+        card.learn_spaced_rep.next_date = form.next_date.data
+        card.learn_spaced_rep.bucket = form.bucket.data
         db.session.add(card)
         db.session.commit()
         flash("Your card is edited!")
@@ -339,14 +354,6 @@ def delete_deck(deck_id):
         return redirect(url_for("main.index"))
 
 
-@bp.route("/get_current_stats")
-@login_required
-def get_current_stats():
-    lh = LearningHelper(user=current_user)
-    lh.init_session(write_new_session=False)
-    return lh.stats
-
-
 @bp.route("/before_learning", methods=["GET", "POST"])
 @login_required
 def before_learning():
@@ -360,10 +367,13 @@ def before_learning():
         )
         lh.init_session(write_new_session=True)
         return redirect(url_for("main.learning"))
+    else:
+        lh = LearningHelper(user=current_user)
+        lh.init_session(write_new_session=False)
     return render_template(
         "before_learning.html",
         start_form=start_form,
-        lh_stats=get_current_stats(),
+        lh=lh,
     )
 
 

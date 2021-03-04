@@ -1,14 +1,16 @@
-{% extends "base.html" %} {% import 'bootstrap/form.html' as wtf %} {% block
-app_content %}
-<div class="row">
-  <div class="col-md-3 mb-lg-5 mt-2">
+{% extends "base.html" %}
+{% import 'bootstrap/form.html' as wtf %}
+{% block app_content %}
+<h4 class='text-secondary'>Statistics</h4>
+<div class="row mb-lg-5">
+  <div class="col-md-4">
     <!-- Card -->
     <div class="card card-hover-shadow h-100">
       <div class="card-body">
         <h6 class="card-subtitle mb-2 text-secondary">Today's Objective</h6>
         <div class="row align-items-center mb-1">
           <div class="col-12">
-            <span class="card-title h2">{{ lh_stats['num_total'] }}</span
+            <span class="card-title h2">{{ lh.stats['num_total'] }}</span
             ><span class="text-secondary"> cards</span>
           </div>
         </div>
@@ -16,14 +18,14 @@ app_content %}
     </div>
     <!-- End Card -->
   </div>
-  <div class="col-md-3 mb-lg-5 m-2">
+  <div class="col-md-4">
     <!-- Card -->
     <div class="card card-hover-shadow h-100">
       <div class="card-body">
         <h6 class="card-subtitle mb-2 text-secondary">Estimated Duration</h6>
         <div class="row align-items-center mb-1">
           <div class="col-12">
-            <span class="card-title h2">{{ lh_stats['num_minutes'] }}</span
+            <span class="card-title h2">{{ lh.stats['num_minutes'] }}</span
             ><span class="text-secondary"> minutes</span>
           </div>
         </div>
@@ -33,7 +35,15 @@ app_content %}
   </div>
 </div>
 
-{% if lh_stats['num_total'] > 0 %}
+<h4 class='text-secondary'>Cards to learn</h4>
+<div class="row mb-lg-4">
+  {% for card in lh.cards %}
+  {% include 'card.html' %}
+  {% endfor %}
+</div>
+
+<h4 class='text-secondary'>Set up your session</h4>
+{% if lh.stats['num_total'] > 0 %}
 <form action="" method="post">
   {{ start_form.hidden_tag() }}
   <input type="hidden" name="mode" value="start" />
@@ -53,4 +63,11 @@ app_content %}
 </form>
 {% else %}
 <h2>You have no card to learn today!</h2>
-{% endif %} {% endblock %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %} {{ super() }}
+<script>
+  $(".cardBack").hide();
+</script>
+{% endblock %}

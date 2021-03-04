@@ -265,7 +265,15 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     deck_id = db.Column(db.Integer, db.ForeignKey("deck.id"))
     next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
     bucket = db.Column(db.Integer)
-    ls_facts = db.relationship("LearningSessionFact", backref="card", lazy="dynamic")
+    learn_spaced_rep_id = db.Column(
+        db.Integer, db.ForeignKey("learn_spaced_repetition.id")
+    )
+    ls_facts = db.relationship(
+        "LearningSessionFact",
+        backref="card",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
     def get_deck_name(self):
         if self.deck_id:
@@ -287,7 +295,29 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     def __repr__(self):
         return f"<Deck {self.get_deck_name()} - Card {self.front}>"
 
+    def get_next_date(self):
+        # DEV-54 temporary solution
+        # TODO: remove this code when DEV-54 closed
+        if self.learn_spaced_rep:
+            return self.learn_spaced_rep.next_date
+        if self.next_date:
+            return self.next_date
+        return None
+
+    def get_bucket(self):
+        # DEV-54 temporary solution
+        # TODO: remove this code when DEV-54 closed
+        if self.learn_spaced_rep:
+            return self.learn_spaced_rep.bucket
+        if self.bucket:
+            return self.bucket
+        return None
+
     def to_dict(self):
+        next_date = self.get_next_date()
+        if next_date:
+            next_date = next_date.isoformat() + "Z"
+        bucket = self.get_bucket()
         data = {
             "id": self.id,
             "front": self.front,
@@ -295,8 +325,8 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            "next_date": self.next_date,
-            "bucket": self.bucket,
+            "next_date": next_date,
+            "bucket": bucket,
             "_links": {"self": url_for("api.get_card", id=self.id)},
         }
         return data
@@ -307,22 +337,18 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "back",
             "user_id",
             "deck_id",
-            "next_date",
-            "bucket",
         ]
         for field in client_set_fields:
             if field in data:
                 setattr(self, field, data[field])
+        learn_spaced_rep_fields = [
+            "next_date",
+            "bucket",
+        ]
+        for field in learn_spaced_rep_fields:
+            if field in data:
+                setattr(self.learn_spaced_rep, field, data[field])
         setattr(self, "timestamp", datetime.utcnow())
-
-    @staticmethod
-    def _get_day_from_bucket(bucket):
-        if bucket <= 0:
-            return 0
-        elif bucket <= 3:
-            return 1
-        elif bucket <= 5:
-            return 2
 
     @staticmethod
     def delete_card_img(back: str):
@@ -399,3 +425,20 @@ class LearningSessionFact(db.Model):
             "number": self.number,
         }
         return data
+
+
+class LearnSpacedRepetition(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    next_date = db.Column(db.DateTime, default=datetime.utcnow().date, index=True)
+    bucket = db.Column(db.Integer)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    card = db.relationship("Card", backref="learn_spaced_rep", lazy="dynamic")
+
+    @staticmethod
+    def _get_day_from_bucket(bucket):
+        if bucket <= 0:
+            return 0
+        elif bucket <= 3:
+            return 1
+        elif bucket <= 5:
+            return 2
