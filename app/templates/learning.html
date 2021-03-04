@@ -31,8 +31,13 @@ if card is not none %}
         </a>
       </h5>
       <div class="mr-auto"></div>
-      <div>
-        <p>{% include 'icons/bucket.html' %} {{ card.bucket }}</p>
+      <div class="flex-column">
+        <small class="d-flex justify-content-start text-secondary mr-1">Mastery</small>
+        <div class="d-flex">
+          {% with mastery_level = (card.learn_spaced_rep.bucket - 1) %}
+            {% include 'icons/mastery_level.html' %}
+          {% endwith %}
+        </div>
       </div>
     </div>
     <div class="row mt-2">

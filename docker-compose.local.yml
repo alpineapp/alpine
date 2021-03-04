@@ -3,6 +3,8 @@ services:
     volumes:
       - ./app:/home/alpine/app
       - ./migrations:/home/alpine/migrations
+    env_file:
+      - .local_env
 
   elasticsearch:
     deploy:

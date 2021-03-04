@@ -1,0 +1,14 @@
+{% if mastery_level is not defined %}
+  {% with mastery_level = 0 %}
+    {% for i in range(5) %}
+      {% include 'icons/circle.html' %}
+    {% endfor %}
+  {% endwith %}
+{% else %}
+  {% for i in range(mastery_level) %}
+    {% include 'icons/circle_fill.html' %}
+  {% endfor %}
+  {% for i in range(5 - mastery_level) %}
+    {% include 'icons/circle.html' %}
+  {% endfor %}
+{% endif %}

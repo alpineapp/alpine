@@ -8,6 +8,7 @@ volumes:
     v-alpine-db:
     v-alpine-es:
     v-alpine-metabase:
+    v-alpine-disk:
 
 services:
   # ----------------------------------------------
@@ -106,6 +107,8 @@ services:
     container_name: alpine
     image: alpine:latest
     build: .
+    volumes:
+      - v-alpine-disk:/home/alpine/data
     command: >
       sh -c "
       ./boot.sh
