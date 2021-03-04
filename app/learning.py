@@ -22,7 +22,8 @@ class LearningHelper:
     ):
         self.user = user
         self.num_random_learned = num_random_learned
-        self.learn_date = learn_date
+        # Change learn_date to end of day
+        self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
         self.deck_id = deck_id
         self.user_cards = user.cards
         if deck_id:
@@ -183,16 +184,16 @@ class LearningHelper:
         new_ls_id = current_ls_id + 1
         self.current_ls_id = new_ls_id
         created_at = datetime.utcnow()
-        self.ls_facts = [
-            LearningSessionFact(
+        for number, card in enumerate(self.cards):
+            lsf = LearningSessionFact(
                 ls_id=new_ls_id,
                 user_id=self.user.id,
                 created_at=created_at,
                 card=card,
                 number=number,
             )
-            for number, card in enumerate(self.cards)
-        ]
+            self.ls_facts.append(lsf)
+
         return self
 
     @staticmethod

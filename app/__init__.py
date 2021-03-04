@@ -1,5 +1,5 @@
 from flask import Flask
-from config import Config
+from config import config
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from flask_migrate import Migrate
@@ -31,10 +31,10 @@ bootstrap = Bootstrap()
 moment = Moment()
 
 
-def create_app(config_class=Config):
+def create_app(config_name="default"):
     app = Flask(__name__)
     CORS(app)
-    app.config.from_object(Config)
+    app.config.from_object(config[config_name])
 
     db.init_app(app)
     with app.app_context():
