@@ -165,7 +165,7 @@ class User(UserMixin, db.Model):
         return Task.query.filter_by(name=name, user=self, complete=False).first()
 
     def get_tags(self):
-        tags = self.tags.all()
+        tags = self.tags.order_by(Tag.timestamp.desc()).all()
         return tags
 
     def to_dict(self, include_email=False):
@@ -212,47 +212,6 @@ class User(UserMixin, db.Model):
         self.current_ls_id = current_ls_id
 
 
-# class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
-#     __searchable__ = ["name"]
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(256))
-#     description = db.Column(db.String(1024))
-#     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-#     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
-#     cards = db.relationship(
-#         "Card", backref="deck", lazy="dynamic", cascade="all, delete-orphan"
-#     )
-
-#     def __repr__(self):
-#         return "<Deck {}>".format(self.name)
-
-#     def preview_description(self):
-#         if self.description:
-#             return self.description
-#         else:
-#             return ""
-
-#     def get_cards(self):
-#         return self.cards.order_by(Card.timestamp.desc()).all()
-
-#     def to_dict(self):
-#         data = {
-#             "id": self.id,
-#             "name": self.name,
-#             "timestamp": self.timestamp.isoformat() + "Z",
-#             "user_id": self.user_id,
-#             "_links": {"self": url_for("api.get_deck", id=self.id)},
-#         }
-#         return data
-
-#     def from_dict(self, data):
-#         client_set_fields = ["name", "user_id"]
-#         for field in client_set_fields:
-#             if field in data:
-#                 setattr(self, field, data[field])
-#         setattr(self, "timestamp", datetime.utcnow())
-
-
 class Tagging(db.Model):
     tag_id = db.Column(db.Integer, db.ForeignKey("tag.id"), primary_key=True)
     card_id = db.Column(db.Integer, db.ForeignKey("card.id"), primary_key=True)
@@ -263,6 +222,7 @@ class Tag(PaginatedAPIMixin, SearchableMixin, db.Model):
     __searchable__ = ["name"]
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
+    description = db.Column(db.String(1028))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     cards = db.relationship(
@@ -324,8 +284,20 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
         cascade="all, delete-orphan",
     )
 
-    def get_tags(self):
-        return self.tags.filter_by(card_id=Card.id).all()
+    def get_tag_names(self):
+        taggings = self.tags.filter_by(card_id=Card.id).all()
+        tag_names = []
+        for tagging in taggings:
+            tag_name = Tag.query.get_or_404(tagging.tag_id).name
+            tag_names.append(tag_name)
+        return tag_names
+
+    def get_all_tags(self):
+        taggings = self.tags.filter_by(card_id=Card.id).all()
+        tags = []
+        for tagging in taggings:
+            tags.append(Tag.query.get(tagging.tag_id))
+        return tags
 
     def preview_back(self):
         if len(self.back) > self.MAX_CHAR_BACK:

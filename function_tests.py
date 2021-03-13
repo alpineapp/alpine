@@ -1,6 +1,6 @@
 import unittest
 from app import create_app, db
-from app.models import User, Deck, Card, LearnSpacedRepetition
+from app.models import User, Tag, Tagging, Card, LearnSpacedRepetition
 import os
 import re
 from datetime import datetime
@@ -29,8 +29,8 @@ class FlaskClientTestCase(unittest.TestCase):
             data={"username": "admin", "password": "1"},
             follow_redirects=True,
         )
-        deck = Deck(name="test", description="test body", user_id=user.id)
-        db.session.add(deck)
+        tag = Tag(name="test", description="test", user_id=user.id)
+        db.session.add(tag)
         db.session.flush()
         learn_spaced_rep = LearnSpacedRepetition(
             next_date=datetime.today(),
@@ -41,11 +41,13 @@ class FlaskClientTestCase(unittest.TestCase):
         card = Card(
             front="front test",
             back="back test",
-            deck_id=deck.id,
             learn_spaced_rep_id=learn_spaced_rep.id,
             user_id=user.id,
         )
         db.session.add(card)
+        db.session.flush()
+        tagging = Tagging(tag_id=tag.id, card_id=card.id)
+        db.session.add(tagging)
         db.session.commit()
 
 
@@ -79,36 +81,36 @@ class AuthTest(FlaskClientTestCase):
         self.assertEqual(response.status_code, 302)
 
 
-class DeckTest(FlaskClientTestCase):
-    def test_create_deck(self):
-        # Create deck
+class TagTest(FlaskClientTestCase):
+    def test_create_tag(self):
+        # Create tag
         response = self.client.post(
-            "/deck",
+            "/tag",
             data={"name": "test", "description": "test description"},
             follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
-            re.search("Your deck is added!", response.get_data(as_text=True))
+            re.search("Your tag is added!", response.get_data(as_text=True))
         )
 
-    def test_edit_deck(self):
-        # Edit deck
+    def test_edit_tag(self):
+        # Edit tag
         response = self.client.post(
-            "/deck/edit_deck/1",
+            "/tag/edit_tag/1",
             data={"name": "test", "description": "test description 2"},
             follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
-            re.search("Your deck is edited!", response.get_data(as_text=True))
+            re.search("Your tag is edited!", response.get_data(as_text=True))
         )
 
-    def test_delete_deck(self):
-        # Delete deck
-        response = self.client.post("/deck/1/delete_deck")
+    def test_delete_tag(self):
+        # Delete tag
+        response = self.client.post("/tag/1/delete_tag")
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(Deck.query.all(), [])
+        self.assertEqual(Tag.query.all(), [])
 
 
 class CardTest(FlaskClientTestCase):
@@ -119,7 +121,7 @@ class CardTest(FlaskClientTestCase):
             data={
                 "front": "test",
                 "back": "test",
-                "deck": "test",
+                "tags": "test",
                 "user_id": 1,
                 "next_date": "2021-02-14",
                 "bucket": 1,
@@ -132,18 +134,20 @@ class CardTest(FlaskClientTestCase):
         )
 
     def test_edit_card(self):
+        get_response = self.client.get("card/1/edit_card")
         response = self.client.post(
             "/card/1/edit_card",
             data={
                 "front": "test edit",
                 "back": "test edit",
-                "deck": "test",
+                "tags": "test",
                 "next_date": "2021-02-14",
                 "bucket": 1,
                 "mode": "submit",
             },
             follow_redirects=True,
         )
+        self.assertEqual(get_response.status_code, 200)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(
             re.search("Your card is edited!", response.get_data(as_text=True))
@@ -215,8 +219,8 @@ class LearnTest(FlaskClientTestCase):
             data={
                 "front": card.front,
                 "back": card.back,
-                "deck": card.deck,
-                "next_date": "2021-02-13",
+                "tags": "test",
+                "next_date": str(datetime.today().date()),
                 "bucket": 6,
                 "mode": "submit",
             },

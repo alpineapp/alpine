@@ -22,14 +22,16 @@ if card is not none %}
       </div>
     </div>
     <div class="row">
-      <h5>
-        <a
-          class="btn btn-sm btn-outline-dark"
-          href="{{ url_for('main.tag_profile', tag_id=card.tags.first().id) }}"
-        >
-          {% include 'icons/tag.html' %} {{ card.tags.first().name }}
-        </a>
-      </h5>
+      {% for tag in card.get_all_tags() %}
+        <h5 class="mr-1">
+          <a
+            class="btn btn-sm btn-outline-dark"
+            href="{{ url_for('main.tag_profile', tag_id=tag.id) }}"
+          >
+            {% include 'icons/tag.html' %} {{ tag.name }}
+          </a>
+        </h5>
+      {% endfor %}
       <div class="mr-auto"></div>
       <div class="flex-column">
         <small class="d-flex justify-content-start text-secondary mr-1">Mastery</small>

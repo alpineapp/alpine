@@ -3,12 +3,13 @@
     <div class="card-body">
       <div class="d-flex">
         <div class="d-inline-block">
-          <h6
+          <a
             class="card-title truncate-overflow"
             style="height: calc(var(--lh) * 2)"
+            href="{{ url_for('main.card_profile', card_id=card.id) }}"
           >
             {{ card.front }}
-          </h6>
+          </a>
         </div>
         <div class="mr-auto"></div>
         <div class="d-inline-block m-0 p-0 btn-group dropright">
@@ -40,16 +41,6 @@
         {{ card.back }}
       </p>
       <div class="d-flex justify-content-between align-items-center">
-        {% for tagging in card.tags.all() %}
-        <div class="btn-group">
-          <a
-            class="btn btn-sm btn-outline-dark"
-            href="{{ url_for('main.tag_profile', tag_id=tagging.tag_id) }}"
-          >
-            {% include 'icons/tag.html' %} {{ Tag.query.filter_by(id=tagging.tag_id).first().name }}
-          </a>
-        </div>
-        {% endfor %}
         <div class="mr-auto"></div>
         <div class="flex-column">
           <small class="d-flex justify-content-start text-secondary mr-1">Mastery</small>

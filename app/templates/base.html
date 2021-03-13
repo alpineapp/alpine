@@ -132,19 +132,19 @@
       var numberOfActiveItems = tagInput.closest(".dropdown-menu").find("li.active").length;
       if (numberOfActiveItems > 0) return;
       // If no result then temporarily remove all the current options so that new option can be added
-      $("#tag").empty();
-      sel = document.getElementById('tag');
+      $("#tags").empty();
+      sel = document.getElementById('tags');
       const input = tagInput.val();
       newOption = new Option(input, input);
       sel.add(newOption);
-      $('#tag').selectpicker('refresh');
+      $('#tags').selectpicker('refresh');
     }
 
     function handleNewOption() {
       // If newOption is selected then enlist to userTags else remove
       if (newOption === null) return;
       var flag = false;
-      const values = $("#tag").val();
+      const values = $("#tags").val();
       for (const value of values) {
         if (value == newOption.value) {
           userTags.unshift(newOption);
@@ -153,7 +153,7 @@
         }
       }
       if (!flag) {
-        tagOptionElement = $(`#tag option[value='${newOption.value}']`);
+        tagOptionElement = $(`#tags option[value='${newOption.value}']`);
         tagOptionElement.remove();
       }
       newOption = null;
@@ -172,11 +172,11 @@
     $(document).on('focus', '#tag-div .bs-searchbox input', function(e) {
       // When enter input do load new tag options followed by database tags
       handleNewOption();
-      sel = document.getElementById('tag');
+      sel = document.getElementById('tags');
       $.each(userTags, function(i, option) {
         sel.add(option);
       })
-      $('#tag').selectpicker('refresh');
+      $('#tags').selectpicker('refresh');
     })
   });
 

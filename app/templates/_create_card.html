@@ -19,7 +19,7 @@
     <div class="row form-row">
         <div class='form-group col-md-3' id='tag-div'>
         <label>{{ form.tags.label.text }}</label>
-        <select id="tag" name="tag" required class="selectpicker form-control"
+        <select id="tags" name="tags" required class="selectpicker form-control"
                 data-live-search="true" multiple mobile="true">
         {% if tag is defined %}
             <option id="selectedTag" value='{{ tag.name }}' selected>{{ tag.name }}</option>

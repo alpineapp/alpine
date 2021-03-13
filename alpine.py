@@ -17,7 +17,7 @@ def make_shell_context():
         "Notification": Notification,
         "Tag": Tag,
         "Task": Task,
-        "Tagging": Tagging
+        "Tagging": Tagging,
     }
 
 

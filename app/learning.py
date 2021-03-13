@@ -25,7 +25,7 @@ class LearningHelper:
         self.num_random_learned = num_random_learned
         # Change learn_date to end of day
         self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
-        self.deck_id = deck_id
+        self.tag_id = tag_id
         self.user_cards = user.cards
         if tag_id:
             self.user_cards = self.user_cards.filter(Card.tag_id == tag_id)

@@ -80,12 +80,8 @@ def index():
         )
         db.session.add(learn_spaced_rep)
         db.session.flush()
-        
-        tag_name_text = form.tags.data or "Unnamed"
-        if "," in tag_name_text:
-            tag_names = [name.strip() for name in tag_name_text.split(",")]
-        if "," not in tag_name_text:
-            tag_names = [tag_name_text]
+
+        tag_names = form.tags.data or "Unnamed"
         card = Card(
             front=form.front.data,
             back=form.back.data,
@@ -100,14 +96,12 @@ def index():
                 tag = Tag(name=tag_name, user_id=current_user.id)
                 db.session.add(tag)
                 db.session.flush()
-            tagging = Tagging(
-                tag_id=tag.id,
-                card_id=card.id
-            )
+            current_app.logger.info(tag)
+            tagging = Tagging(tag_id=tag.id, card_id=card.id)
             db.session.add(tagging)
-            db.session.commit()
-            flash("Your card is added!")
-            return redirect(url_for("main.index"))
+        db.session.commit()
+        flash("Your card is added!")
+        return redirect(url_for("main.index"))
     elif request.method == "GET":
         form.next_date.data = datetime.today()
     page = request.args.get("page", 1, type=int)
@@ -212,10 +206,10 @@ def create_card(tag_id):
     form = CardForm()
     tag = Tag.query.get_or_404(tag_id)
     if form.validate_on_submit():
-        if form.tags.data != tag.name:
+        if form.tags.data[0] != tag.name:
             flash("You entered a different tag!")
             return redirect(url_for("main.tag_profile", tag_id=tag.id))
-            
+
         learn_spaced_rep = LearnSpacedRepetition(
             next_date=form.next_date.data,
             bucket=form.bucket.data,
@@ -226,17 +220,32 @@ def create_card(tag_id):
         card = Card(
             front=form.front.data,
             back=form.back.data,
-            tag_id=tag.id,
             user_id=current_user.id,
             learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
+        db.session.flush()
+
+        tagging = Tagging(tag_id=tag.id, card_id=card.id)
+        db.session.add(tagging)
         db.session.commit()
         flash("Your card is added!")
         return redirect(url_for("main.tag_profile", tag_id=tag.id))
     elif request.method == "GET":
         form.next_date.data = datetime.today()
     return render_template("create_card.html", form=form, tag=tag)
+
+
+@bp.route("/card/<card_id>", methods=["GET", "POST"])
+@login_required
+def card_profile(card_id):
+    card = Card.query.get_or_404(card_id)
+    tags = []
+    for tagging in card.tags.all():
+        tag = Tag.query.filter_by(id=tagging.tag_id).first()
+        if tag:
+            tags.append(tag)
+    return render_template("card_profile.html", card=card, tags=tags)
 
 
 @bp.route("/card/<card_id>/edit_card", methods=["GET", "POST"])
@@ -250,44 +259,45 @@ def edit_card(card_id):
     if request.method == "GET":
         form.front.data = card.front
         form.back.data = card.back
-        # form.tags.data = card.tags.name # TODO
+        form.tags.data = card.get_tag_names()
         form.next_date.data = card.learn_spaced_rep.next_date
         form.bucket.data = card.learn_spaced_rep.bucket
         return render_template("edit_card.html", card=card, form=form, mode="edit")
     if request.form["mode"] == "submit" and form.validate_on_submit():
-        tag_name_text = form.tags.data or "Unnamed"
-        if "," in tag_name_text:
-            tag_names = [name.strip() for name in tag_name_text.split(",")]
-        if "," not in tag_name_text:
-            tag_names = [tag_name_text]
+        current_taggings = card.tags.all()
+        for t in current_taggings:
+            db.session.delete(t)
+            db.session.flush()
+        tag_names = form.tags.data or "Unnamed"
         for tag_name in tag_names:
             tag = current_user.tags.filter_by(name=tag_name).first()
             if not tag:
                 tag = Tag(name=tag_name, user_id=current_user.id)
                 db.session.add(tag)
                 db.session.flush()
+            tagging = Tagging(tag_id=tag.id, card_id=card.id)
+            db.session.add(tagging)
+            db.session.flush()
         card.front = form.front.data
         card.back = form.back.data
-        card.tag_id = tag.id
         card.timestamp = datetime.utcnow()
         card.learn_spaced_rep.next_date = form.next_date.data
         card.learn_spaced_rep.bucket = form.bucket.data
         db.session.add(card)
         db.session.commit()
         flash("Your card is edited!")
-    return redirect(url_for("main.tag_profile", tag_id=tag.id))
+    return redirect(url_for("main.index"))
 
 
 @bp.route("/card/<card_id>/delete_card", methods=["GET", "POST"])
 @login_required
 def delete_card(card_id):
     card = Card.query.get_or_404(card_id)
-    tag_id = card.tag_id
     if "<img src=" in card.back and current_app.config["UPLOAD_PATH"] in card.back:
         Card.delete_card_img(card.back)
     db.session.delete(card)
     db.session.commit()
-    return redirect(url_for("main.tag_profile", tag_id=tag_id))
+    return redirect(url_for("main.index"))
 
 
 @bp.route("/tag/<tag_id>", methods=["GET", "POST"])
@@ -298,7 +308,7 @@ def tag_profile(tag_id):
         return redirect(url_for("main.index"))
     edit_tag_form = TagForm()
     page = request.args.get("page", 1, type=int)
-    cards = tag.cards.order_by(Card.timestamp.desc()).paginate(
+    cards = tag.cards.order_by(Tagging.timestamp.desc()).paginate(
         page, current_app.config["CARDS_PER_PAGE"], False
     )
     next_url = (
@@ -311,10 +321,12 @@ def tag_profile(tag_id):
         if cards.has_prev
         else None
     )
+
+    ls_cards = [Card.query.filter_by(id=i.card_id).first() for i in cards.items]
     return render_template(
         "tag_profile.html",
         tag=tag,
-        cards=cards.items,
+        cards=ls_cards,
         edit_tag_form=edit_tag_form,
         next_url=next_url,
         prev_url=prev_url,
@@ -335,9 +347,7 @@ def tag():
         db.session.commit()
         flash("Your tag is added!")
         return redirect(url_for("main.tag_profile", tag_id=tag.id))
-    return render_template(
-        "tag.html", edit_tag_form=edit_tag_form, user=current_user
-    )
+    return render_template("tag.html", edit_tag_form=edit_tag_form, user=current_user)
 
 
 @bp.route("/tag/edit_tag/<tag_id>", methods=["GET", "POST"])
@@ -364,7 +374,9 @@ def edit_tag(tag_id):
 @login_required
 def delete_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
-    for card in tag.cards:
+    for tagging in tag.cards:
+        card_id = tagging.card_id
+        card = Card.query.get_or_404(card_id)
         if "<img src=" in card.back and current_app.config["UPLOAD_PATH"] in card.back:
             Card.delete_card_img(card.back)
     db.session.delete(tag)
