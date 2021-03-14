@@ -208,6 +208,29 @@ class LearnTest(FlaskClientTestCase):
         self.assertEqual(num_success, 0)
         self.assertEqual(Card.query.first().learn_spaced_rep.bucket, 1)
 
+    def test_card_learn_after_mastered(self):
+        card = Card.query.get(1)
+        self.client.post(
+            "/card/1/edit_card",
+            data={
+                "front": card.front,
+                "back": card.back,
+                "deck": card.deck,
+                "next_date": "2021-02-13",
+                "bucket": 6,
+                "mode": "submit",
+            },
+            follow_redirects=True,
+        )
+        response = self.client.get("/before_learning")
+        num_learn = re.search(
+            """<span class="card-title h2">([0-9]+)<""",
+            response.get_data(as_text=True),
+        )
+        if num_learn:
+            num_learn = int(num_learn.group(1))
+        self.assertEqual(num_learn, 0)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
