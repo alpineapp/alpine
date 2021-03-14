@@ -376,7 +376,7 @@ def get_cards():
 def card_display_box():
     card_id = request.args.get("card_id", type=int)
     if not card_id:
-        raise Exception(f"No card_id passed")
+        raise Exception("No card_id passed")
     card = Card.query.get_or_404(int(card_id))
     return render_template("card.html", card=card)
 
@@ -398,6 +398,7 @@ def before_learning():
     else:
         lh = LearningHelper(user=current_user)
         lh.init_session(write_new_session=False)
+        start_form.num_learn.data = len(lh.cards)
     return render_template(
         "before_learning.html",
         start_form=start_form,
