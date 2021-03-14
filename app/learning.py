@@ -16,12 +16,14 @@ SESSION_EXPIRE_HOUR = 24
 class LearningHelper:
     def __init__(
         self,
+        num_learn=5,
         num_random_learned=0,
         learn_date=datetime.today(),
         tag_id=None,
         user=current_user,
     ):
         self.user = user
+        self.num_learn = num_learn
         self.num_random_learned = num_random_learned
         # Change learn_date to end of day
         self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
@@ -191,6 +193,7 @@ class LearningHelper:
 
     def _build(self):
         random.shuffle(self.cards)
+        self.cards = self.cards[: self.num_learn]
         self.stats["num_total"] = len(self.cards)
         self.stats["num_minutes"] = self._calc_duration(len(self.cards))
 
@@ -198,7 +201,7 @@ class LearningHelper:
         current_max_ls_id = db.session.query(
             func.max(LearningSessionFact.ls_id)
         ).scalar()
-        if current_max_ls_id:
+        if current_max_ls_id is not None:
             new_ls_id = current_max_ls_id + 1
         else:
             new_ls_id = 0
@@ -213,7 +216,6 @@ class LearningHelper:
                 number=number,
             )
             self.ls_facts.append(lsf)
-
         return self
 
     @staticmethod
