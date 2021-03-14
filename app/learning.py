@@ -174,8 +174,14 @@ class LearningHelper:
 
     def _collect_tasks_today(self):
         cards = (
-            self.user_cards.join(LearnSpacedRepetition)
+            self.user_cards.join(
+                LearnSpacedRepetition,
+                Card.learn_spaced_rep_id == LearnSpacedRepetition.id,
+            )
             .filter(LearnSpacedRepetition.next_date <= self.learn_date)
+            .filter(
+                LearnSpacedRepetition.bucket < LearnSpacedRepetition.get_max_bucket()
+            )
             .all()
         )
         self.cards.extend(cards)
