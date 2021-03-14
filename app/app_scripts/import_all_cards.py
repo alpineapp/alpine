@@ -16,7 +16,11 @@ with app.app_context():
         for line in f:
             card = json.loads(line)
             # Parse object from card json to build LearnSpacedRepetition object
-            next_date = datetime.strptime(card["next_date"], "%Y-%m-%dT%H:%M:%SZ")
+            next_date = card["next_date"]
+            if next_date is None:
+                app.logger.warning(f"Card ID {card['id']} has next_date = None")
+                next_date = "1970-01-01T00:00:00Z"
+            next_date = datetime.strptime(next_date, "%Y-%m-%dT%H:%M:%SZ")
             bucket = int(card["bucket"])
             learn_spaced_rep = LearnSpacedRepetition(next_date=next_date, bucket=bucket)
             card_obj = Card.query.get(card["id"])

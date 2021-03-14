@@ -295,29 +295,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     def __repr__(self):
         return f"<Deck {self.get_deck_name()} - Card {self.front}>"
 
-    def get_next_date(self):
-        # DEV-54 temporary solution
-        # TODO: remove this code when DEV-54 closed
-        if self.learn_spaced_rep:
-            return self.learn_spaced_rep.next_date
-        if self.next_date:
-            return self.next_date
-        return None
-
-    def get_bucket(self):
-        # DEV-54 temporary solution
-        # TODO: remove this code when DEV-54 closed
-        if self.learn_spaced_rep:
-            return self.learn_spaced_rep.bucket
-        if self.bucket:
-            return self.bucket
-        return None
-
     def to_dict(self):
-        next_date = self.get_next_date()
-        if next_date:
-            next_date = next_date.isoformat() + "Z"
-        bucket = self.get_bucket()
         data = {
             "id": self.id,
             "front": self.front,
@@ -325,8 +303,8 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "deck_id": self.deck_id,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            "next_date": next_date,
-            "bucket": bucket,
+            "next_date": self.learn_spaced_rep.next_date,
+            "bucket": self.learn_spaced_rep.bucket,
             "_links": {"self": url_for("api.get_card", id=self.id)},
         }
         return data
