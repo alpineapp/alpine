@@ -24,6 +24,7 @@ jobs:
           MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          DISK_PATH: ${{ secrets.DISK_PATH }}
           TINYMCE_API_KEY: ${{ secrets.TINYMCE_API_KEY }}
         run: |
           touch .env
@@ -36,6 +37,7 @@ jobs:
           echo POSTGRES_USER="$POSTGRES_USER" >> .env
           echo POSTGRES_PASSWORD="$POSTGRES_PASSWORD" >> .env
           echo POSTGRES_DB="alpine" >> .env
+          echo DISK_PATH="$DISK_PATH" >> .env
           echo TINYMCE_API_KEY="$TINYMCE_API_KEY" >> .env
 
       - name: Install Docker certs
