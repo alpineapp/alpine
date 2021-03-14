@@ -1,8 +1,6 @@
 on:
   release:
     types: [created, published, edited]
-    tags:
-      - 'v*'
 
 env:
   DOCKER_TLS_VERIFY: "1"
