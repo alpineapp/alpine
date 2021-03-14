@@ -172,7 +172,9 @@ class LearnTest(FlaskClientTestCase):
 
     def test_first_card_learning(self):
         response = self.client.post(
-            "/before_learning", data={"mode": "start"}, follow_redirects=True
+            "/before_learning",
+            data={"mode": "start", "cardsSelected": ",1"},
+            follow_redirects=True,
         )
         self.assertTrue(re.search("front test", response.get_data(as_text=True)))
 
@@ -181,7 +183,7 @@ class LearnTest(FlaskClientTestCase):
         # here like real flow then a duplicated lsf is created
         response = self.client.post(
             "/before_learning",
-            data={"mode": "start"},
+            data={"mode": "start", "cardsSelected": ",1"},
             follow_redirects=True,
         )
         response = self.client.put("/update_lsf_status?is_ok=1&lsf_id=1")
@@ -198,7 +200,7 @@ class LearnTest(FlaskClientTestCase):
     def test_next_card_learning_after_fail(self):
         response = self.client.post(
             "/before_learning",
-            data={"mode": "start"},
+            data={"mode": "start", "cardsSelected": ",1"},
             follow_redirects=True,
         )
         response = self.client.put("/update_lsf_status?is_ok=0&lsf_id=1")

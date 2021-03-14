@@ -34,7 +34,7 @@ from app.models import (
     LearningSessionFact,
     LearnSpacedRepetition,
 )
-from app.learning import LearningHelper
+from app.learning import LearningHelper, LearningSessionBuilder
 
 
 def validate_image(stream):
@@ -419,14 +419,16 @@ def card_display_box():
 def before_learning():
     start_form = BeforeLearningForm()
     if start_form.validate_on_submit() and request.form["mode"] == "start":
-        lh = LearningHelper(
-            num_learn=start_form.num_learn.data,
-            num_random_learned=start_form.num_random_learned.data,
-            learn_date=datetime.today(),
-            tag_id=None,
-            user=current_user,
+        cards_selected_str = request.form["cardsSelected"]
+        current_app.logger.info(
+            f"uid {current_user.id} - Card Id selected to learn: {cards_selected_str}"
         )
-        lh.init_session(write_new_session=True)
+        cards_selected = LearningHelper.parse_cards_from_selected_str(
+            cards_selected_str
+        )
+        lsb = LearningSessionBuilder(user=current_user, cards=cards_selected)
+        lsb.build()
+        lsb.write_session_data()
         return redirect(url_for("main.learning"))
     else:
         lh = LearningHelper(user=current_user)

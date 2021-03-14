@@ -52,6 +52,7 @@
 <form action="" method="post">
   {{ start_form.hidden_tag() }}
   <input type="hidden" name="mode" value="start" />
+  <input id="cardsSelected" type="hidden" name="cardsSelected" value="" />
   <div class="row form-row">
     <div class="form-group col-md-3">
       <label for="numRandomLearnedLabel" class="col-md-12 px-0">
@@ -71,11 +72,7 @@
 
 <hr>
 <h4 class='text-secondary'>Cards to learn</h4>
-<div id="cardList" class="row">
-  {% for card in lh.cards %}
-  {% include 'card.html' %}
-  {% endfor %}
-</div>
+<div id="cardList" class="row"></div>
 
 {% else %}
 <h2>You have no card to learn today!</h2>
@@ -87,7 +84,8 @@
   $(".cardBack").hide();
 
   function getCards() {
-    // is_ok receive int value proxy for bool, to easier pass to Python
+    /* Call to back-end to get a random list of cards based on user input num learn
+    */
     let numLearn = $("#inputNumLearn").val();
     $.ajax({
       url:
@@ -95,7 +93,8 @@
       type: "GET",
     })
       .done(function (response) {
-        console.log(response);
+        // Clear list of selected cards so that new random ones can populate
+        $("#cardsSelected").val("");
         if (response.meta.status == "OK") {
           $("#cardList").html("");
           let cards = response.data.cards;
@@ -110,6 +109,10 @@
               .done(function(htmlCard) {
                 $("#cardList").append(htmlCard);
                 $(".cardBack").hide();
+                // Commnunicate the selected cards to learn to back-end by
+                // appending them to list of selected cards in hidden input value of start_form
+                let cardsSelected = $("#cardsSelected").val();
+                $("#cardsSelected").val(cardsSelected + "," + cardId);
               })
               .fail(function () {
                 console.log(`Can not call ${cardDisplayURL}`);
@@ -122,6 +125,8 @@
       });
   }
 
+  // Trigger at GET before_learning to get all available cards to learn
+  getCards();
   $("#btnRandomCardList").click(getCards);
 </script>
 {% endblock %}
