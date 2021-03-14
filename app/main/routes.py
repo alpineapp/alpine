@@ -354,12 +354,40 @@ def delete_deck(deck_id):
         return redirect(url_for("main.index"))
 
 
+@bp.route("/get_cards", methods=["GET"])
+@login_required
+def get_cards():
+    num_learn = request.args.get("num_learn", type=int)
+    lh = LearningHelper(
+        num_learn=num_learn,
+        num_random_learned=0,
+        learn_date=datetime.today(),
+        deck_id=None,
+        user=current_user,
+    )
+    lh.init_session(write_new_session=False)
+    cards = [card.to_dict() for card in lh.cards]
+    response = {"meta": {"status": "OK"}, "data": {"cards": cards}}
+    return response
+
+
+@bp.route("/card/display_box")
+@login_required
+def card_display_box():
+    card_id = request.args.get("card_id", type=int)
+    if not card_id:
+        raise Exception(f"No card_id passed")
+    card = Card.query.get_or_404(int(card_id))
+    return render_template("card.html", card=card)
+
+
 @bp.route("/before_learning", methods=["GET", "POST"])
 @login_required
 def before_learning():
     start_form = BeforeLearningForm()
     if start_form.validate_on_submit() and request.form["mode"] == "start":
         lh = LearningHelper(
+            num_learn=start_form.num_learn.data,
             num_random_learned=start_form.num_random_learned.data,
             learn_date=datetime.today(),
             deck_id=None,
