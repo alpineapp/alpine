@@ -413,6 +413,10 @@ class LearnSpacedRepetition(db.Model):
     card = db.relationship("Card", backref="learn_spaced_rep", lazy="dynamic")
 
     @staticmethod
+    def get_max_bucket():
+        return 6
+
+    @staticmethod
     def _get_day_from_bucket(bucket):
         if bucket <= 0:
             return 0

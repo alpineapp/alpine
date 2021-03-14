@@ -35,6 +35,7 @@
   </div>
 </div>
 
+{% if lh.stats['num_total'] > 0 %}
 <h4 class='text-secondary'>Cards to learn</h4>
 <div class="row mb-lg-4">
   {% for card in lh.cards %}
@@ -43,7 +44,6 @@
 </div>
 
 <h4 class='text-secondary'>Set up your session</h4>
-{% if lh.stats['num_total'] > 0 %}
 <form action="" method="post">
   {{ start_form.hidden_tag() }}
   <input type="hidden" name="mode" value="start" />
