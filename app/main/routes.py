@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import imghdr
 
@@ -454,3 +454,76 @@ def get_user_tags():
     names = [tag.name for tag in tags]
     result = {"data": names}
     return result
+
+
+@bp.route("/stats", methods=["GET"])
+@login_required
+def stats():
+    num_total_cards = len(Card.query.filter_by(user_id=current_user.id).all())
+    num_total_cards_learnt = len(
+        Card.query.join(
+            LearnSpacedRepetition, Card.learn_spaced_rep_id == LearnSpacedRepetition.id
+        )
+        .filter(Card.user_id == current_user.id, LearnSpacedRepetition.bucket > 1)
+        .all()
+    )
+    num_total_cards_mastered = len(
+        Card.query.join(
+            LearnSpacedRepetition, Card.learn_spaced_rep_id == LearnSpacedRepetition.id
+        )
+        .filter(Card.user_id == current_user.id, LearnSpacedRepetition.bucket == 6)
+        .all()
+    )
+
+    last_7_days_ms = datetime.now() - timedelta(days=7)
+    ss_list_complete_start = (
+        db.session.query(LearningSessionFact.complete_at, LearningSessionFact.start_at)
+        .filter_by(user_id=current_user.id)
+        .filter(LearningSessionFact.start_at >= last_7_days_ms)
+        .all()
+    )
+    num_sessions = len(ss_list_complete_start)
+    # Calculate minutes spent on learning in last 7 days
+    total_minutes = 0
+    for item in ss_list_complete_start:
+        if item[0] != None and item[1] != None:
+            add_minutes = (item[0] - item[1]).total_seconds() / 60
+            total_minutes = int(total_minutes + add_minutes)
+    if total_minutes < 1:
+        total_minutes = 1
+    # Calculate which day in last 7 days user learnt
+    dict_wd_alias = {
+        6: "Sun",
+        0: "Mon",
+        1: "Tue",
+        2: "Wed",
+        3: "Thu",
+        4: "Fri",
+        5: "Sat",
+    }
+    today_wd = datetime.today().weekday()
+    tail_ls_wd = [i for i in range(today_wd + 1)]
+    ls_wd = [i for i in range(today_wd + 1, 7)]
+    for weekday in tail_ls_wd:
+        ls_wd.append(weekday)
+    last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
+    ss_list_wd = [i[1].weekday() for i in ss_list_complete_start]
+    last_7_days_active = list(set(ss_list_wd))
+    last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
+    # Calculate streak
+    # TODO Change streak to count more than 7 days
+    streak = 0
+    for i in range(1, len(last_7_days_active) + 1):
+        if last_7_days_active[-i] == today_wd - (i - 1):
+            streak = streak + 1
+    return render_template(
+        "stats.html",
+        num_total_cards=num_total_cards,
+        num_total_cards_learnt=num_total_cards_learnt,
+        num_total_cards_mastered=num_total_cards_mastered,
+        num_sessions=num_sessions,
+        total_minutes=total_minutes,
+        last_7_days_wd=last_7_days_wd,
+        last_7_days_active_str=last_7_days_active_str,
+        streak=streak,
+    )
