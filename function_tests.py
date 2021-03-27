@@ -1,9 +1,13 @@
+import re
+import os
+from datetime import datetime
 import unittest
+import threading
+import time
+
 from app import create_app, db
 from app.models import User, Deck, Card, LearnSpacedRepetition
-import os
-import re
-from datetime import datetime
+from selenium import webdriver
 
 
 class FlaskClientTestCase(unittest.TestCase):
@@ -47,6 +51,11 @@ class FlaskClientTestCase(unittest.TestCase):
         )
         db.session.add(card)
         db.session.commit()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
 
 class AuthTest(FlaskClientTestCase):
@@ -232,6 +241,170 @@ class LearnTest(FlaskClientTestCase):
         if num_learn:
             num_learn = int(num_learn.group(1))
         self.assertEqual(num_learn, 0)
+
+
+class SeleniumTestCase(FlaskClientTestCase):
+    client = None
+
+    @classmethod
+    def setUpClass(cls):
+        # start Chrome
+        options = webdriver.ChromeOptions()
+        options.add_argument("headless")
+        try:
+            cls.client = webdriver.Chrome(options=options)
+        except:
+            pass
+
+        # skip these tests if the browser could not be started
+        if cls.client:
+
+            # create the application
+            cls.app = create_app("testing")
+
+            @cls.app.template_filter()
+            def get_env(key):
+                return os.environ.get(key)
+
+            cls.app.jinja_env.filters["get_env"] = get_env
+            cls.app_context = cls.app.app_context()
+            cls.app_context.push()
+            # suppress logging to keep unittest output clean
+            import logging
+
+            logger = logging.getLogger("werkzeug")
+            logger.setLevel("ERROR")
+
+            cls.flask_client = cls.app.test_client(use_cookies=True)
+            db.create_all()
+            # Register a fake user for every test and login
+            user = User(username="admin", email="admin@example.com")
+            user.set_password("1")
+            db.session.add(user)
+            db.session.commit()
+            cls.flask_client.post(
+                "/auth/login",
+                data={"username": "admin", "password": "1"},
+                follow_redirects=True,
+            )
+            deck = Deck(name="test", description="test body", user_id=user.id)
+            db.session.add(deck)
+            db.session.flush()
+            learn_spaced_rep = LearnSpacedRepetition(
+                next_date=datetime.today(),
+                bucket=1,
+            )
+            db.session.add(learn_spaced_rep)
+            db.session.flush()
+            card = Card(
+                front="front test",
+                back="back test",
+                deck_id=deck.id,
+                learn_spaced_rep_id=learn_spaced_rep.id,
+                user_id=user.id,
+            )
+            db.session.add(card)
+            db.session.commit()
+
+            # start the Flask server in a thread
+            cls.server_thread = threading.Thread(
+                target=cls.app.run,
+                kwargs={"debug": "false", "use_reloader": False, "use_debugger": False},
+            )
+            cls.server_thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.client:
+            # stop the Flask server and the browser
+            cls.client.get("http://localhost:5000/shutdown")
+            cls.client.quit()
+            cls.server_thread.join()
+
+            # destroy database
+            db.drop_all()
+            db.session.remove()
+
+            # remove application context
+            cls.app_context.pop()
+
+    def setUp(self):
+        if not self.client:
+            self.skipTest("Web browser not available")
+
+    def tearDown(self):
+        pass
+
+    def test_random_selected_cards_to_learn(self):
+        self.flask_client.post(
+            "/1/create_card",
+            data={
+                "front": "card 2",
+                "back": "card 2 back",
+                "deck": "test",
+                "user_id": 1,
+                "next_date": "2021-02-14",
+                "bucket": 1,
+            },
+            follow_redirects=True,
+        )
+        self.flask_client.post(
+            "/1/create_card",
+            data={
+                "front": "card 3",
+                "back": "card 3 back",
+                "deck": "test",
+                "user_id": 1,
+                "next_date": "2021-02-14",
+                "bucket": 1,
+            },
+            follow_redirects=True,
+        )
+        total_cards = Card.query.count()
+        self.assertEqual(total_cards, 3)
+        # Sign in
+        self.client.get("http://localhost:5000")
+        self.client.find_element_by_name("username").send_keys("admin")
+        self.client.find_element_by_name("password").send_keys("1")
+        self.client.find_element_by_name("submit").click()
+        self.assertTrue(re.search("Hi, admin!", self.client.page_source))
+
+        # Learn
+        self.client.get("http://localhost:5000/before_learning")
+        self.assertTrue(re.search("Today's Objective", self.client.page_source))
+        # Wait ajax
+        time.sleep(0.1)
+        # Check return correct amount of cards
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 3)
+
+        # Test feature Random number cards to learn
+        self.client.find_element_by_name("num_learn").clear()
+        self.client.find_element_by_name("num_learn").send_keys("2")
+        self.client.find_element_by_id("btnRandomCardList").click()
+        time.sleep(0.1)
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 2)
+
+        # Check if cards during learn are the ones seen before
+        self.client.find_element_by_id("submit").click()
+        card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
+        card = card[0]
+        card = str(card)
+        self.assertEqual(card, cards_displayed[0])
+        self.client.find_element_by_id("ok-btn").click()
+        self.client.find_element_by_name("next").click()
+
+        card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
+        card = card[0]
+        card = str(card)
+        self.assertEqual(card, cards_displayed[1])
 
 
 if __name__ == "__main__":

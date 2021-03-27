@@ -358,6 +358,7 @@ def delete_deck(deck_id):
 @login_required
 def get_cards():
     num_learn = request.args.get("num_learn", type=int)
+    current_app.logger.info(f"uid {current_user.id}: num_learn: {num_learn}")
     lh = LearningHelper(
         num_learn=num_learn,
         num_random_learned=0,
@@ -387,8 +388,12 @@ def before_learning():
     start_form = BeforeLearningForm()
     if start_form.validate_on_submit() and request.form["mode"] == "start":
         cards_selected_str = request.form["cardsSelected"]
+        cards_selected = cards_selected_str.split(",")
+        cards_selected = [
+            card for card in cards_selected if card is not None and card != ""
+        ]
         current_app.logger.info(
-            f"uid {current_user.id} - Card Id selected to learn: {cards_selected_str}"
+            f"uid {current_user.id} - card_ids selected to learn: {cards_selected}"
         )
         cards_selected = LearningHelper.parse_cards_from_selected_str(
             cards_selected_str
@@ -452,3 +457,14 @@ def get_user_decks():
     names = [deck.name for deck in decks]
     result = {"data": names}
     return result
+
+
+@bp.route("/shutdown")
+def server_shutdown():
+    if not current_app.testing:
+        abort(404)
+    shutdown = request.environ.get("werkzeug.server.shutdown")
+    if not shutdown:
+        abort(500)
+    shutdown()
+    return "Shutting down..."
