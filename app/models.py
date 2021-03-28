@@ -241,6 +241,7 @@ class Deck(PaginatedAPIMixin, SearchableMixin, db.Model):
             "name": self.name,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
+            "card_ids": [card.id for card in self.get_cards()],
             "_links": {"self": url_for("api.get_deck", id=self.id)},
         }
         return data
@@ -301,6 +302,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "front": self.front,
             "back": self.back,
             "deck_id": self.deck_id,
+            "deck_name": self.deck.name,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
             "next_date": self.learn_spaced_rep.next_date,
