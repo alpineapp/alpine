@@ -24,12 +24,13 @@ from app.main.forms import (
     EmptyForm,
     BeforeLearningForm,
     LearningForm,
-    DeckForm,
+    TagForm,
 )
 from app.models import (
     Card,
     Notification,
-    Deck,
+    Tag,
+    Tagging,
     LearningSessionFact,
     LearnSpacedRepetition,
 )
@@ -73,25 +74,31 @@ def upload_image():
 def index():
     form = CardForm()
     if form.validate_on_submit():
-        deck_name = form.deck.data or "Unnamed"
-        deck = current_user.decks.filter_by(name=deck_name).first()
-        if not deck:
-            deck = Deck(name=deck_name, user_id=current_user.id)
-            db.session.add(deck)
         learn_spaced_rep = LearnSpacedRepetition(
             next_date=form.next_date.data,
             bucket=form.bucket.data,
         )
         db.session.add(learn_spaced_rep)
         db.session.flush()
+
+        tag_names = form.tags.data or "Unnamed"
         card = Card(
             front=form.front.data,
             back=form.back.data,
             user_id=current_user.id,
-            deck_id=deck.id,
             learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
+        db.session.flush()
+        for tag_name in tag_names:
+            tag = current_user.tags.filter_by(name=tag_name).first()
+            if not tag:
+                tag = Tag(name=tag_name, user_id=current_user.id)
+                db.session.add(tag)
+                db.session.flush()
+            current_app.logger.info(tag)
+            tagging = Tagging(tag_id=tag.id, card_id=card.id)
+            db.session.add(tagging)
         db.session.commit()
         flash("Your card is added!")
         return redirect(url_for("main.index"))
@@ -108,6 +115,7 @@ def index():
         title="Home",
         form=form,
         cards=cards.items,
+        Tag=Tag,
         mode="create",
         next_url=next_url,
         prev_url=prev_url,
@@ -192,164 +200,189 @@ def export_cards():
     return redirect(url_for("main.index"))
 
 
-@bp.route("/<deck_id>/create_card", methods=["GET", "POST"])
+@bp.route("/<tag_id>/create_card", methods=["GET", "POST"])
 @login_required
-def create_card(deck_id):
+def create_card(tag_id):
     form = CardForm()
-    deck = Deck.query.get_or_404(deck_id)
+    tag = Tag.query.get_or_404(tag_id)
     if form.validate_on_submit():
-        if form.deck.data != deck.name:
-            flash("You entered a different deck!")
-            return redirect(url_for("main.deck_profile", deck_id=deck.id))
+        if form.tags.data[0] != tag.name:
+            flash("You entered a different tag!")
+            return redirect(url_for("main.tag_profile", tag_id=tag.id))
+
         learn_spaced_rep = LearnSpacedRepetition(
             next_date=form.next_date.data,
             bucket=form.bucket.data,
         )
         db.session.add(learn_spaced_rep)
         db.session.flush()
+
         card = Card(
             front=form.front.data,
             back=form.back.data,
-            deck_id=deck.id,
             user_id=current_user.id,
             learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
+        db.session.flush()
+
+        tagging = Tagging(tag_id=tag.id, card_id=card.id)
+        db.session.add(tagging)
         db.session.commit()
         flash("Your card is added!")
-        return redirect(url_for("main.deck_profile", deck_id=deck.id))
+        return redirect(url_for("main.tag_profile", tag_id=tag.id))
     elif request.method == "GET":
         form.next_date.data = datetime.today()
-    return render_template("create_card.html", form=form, deck=deck)
+    return render_template("create_card.html", form=form, tag=tag)
+
+
+@bp.route("/card/<card_id>", methods=["GET", "POST"])
+@login_required
+def card_profile(card_id):
+    card = Card.query.get_or_404(card_id)
+    tags = []
+    for tagging in card.tags.all():
+        tag = Tag.query.filter_by(id=tagging.tag_id).first()
+        if tag:
+            tags.append(tag)
+    return render_template("card_profile.html", card=card, tags=tags)
 
 
 @bp.route("/card/<card_id>/edit_card", methods=["GET", "POST"])
 @login_required
 def edit_card(card_id):
     card = Card.query.get_or_404(card_id)
-    deck = card.deck
+    tag = card.tags
     if current_user.id != card.user_id:
         return redirect(url_for("main.index"))
     form = CardForm()
     if request.method == "GET":
         form.front.data = card.front
         form.back.data = card.back
-        form.deck.data = card.deck.name
+        form.tags.data = card.get_tag_names()
         form.next_date.data = card.learn_spaced_rep.next_date
         form.bucket.data = card.learn_spaced_rep.bucket
         return render_template("edit_card.html", card=card, form=form, mode="edit")
     if request.form["mode"] == "submit" and form.validate_on_submit():
-        deck_name = form.deck.data or "Unnamed"
-        deck = current_user.decks.filter_by(name=deck_name).first()
-        if not deck:
-            deck = Deck(name=deck_name, user_id=current_user.id)
-            db.session.add(deck)
+        current_taggings = card.tags.all()
+        for t in current_taggings:
+            db.session.delete(t)
+            db.session.flush()
+        tag_names = form.tags.data or "Unnamed"
+        for tag_name in tag_names:
+            tag = current_user.tags.filter_by(name=tag_name).first()
+            if not tag:
+                tag = Tag(name=tag_name, user_id=current_user.id)
+                db.session.add(tag)
+                db.session.flush()
+            tagging = Tagging(tag_id=tag.id, card_id=card.id)
+            db.session.add(tagging)
             db.session.flush()
         card.front = form.front.data
         card.back = form.back.data
-        card.deck_id = deck.id
         card.timestamp = datetime.utcnow()
         card.learn_spaced_rep.next_date = form.next_date.data
         card.learn_spaced_rep.bucket = form.bucket.data
         db.session.add(card)
         db.session.commit()
         flash("Your card is edited!")
-    return redirect(url_for("main.deck_profile", deck_id=deck.id))
+    return redirect(url_for("main.index"))
 
 
 @bp.route("/card/<card_id>/delete_card", methods=["GET", "POST"])
 @login_required
 def delete_card(card_id):
     card = Card.query.get_or_404(card_id)
-    deck_id = card.deck_id
     if "<img src=" in card.back and current_app.config["UPLOAD_PATH"] in card.back:
         Card.delete_card_img(card.back)
     db.session.delete(card)
     db.session.commit()
-    return redirect(url_for("main.deck_profile", deck_id=deck_id))
+    return redirect(url_for("main.index"))
 
 
-@bp.route("/deck/<deck_id>", methods=["GET", "POST"])
+@bp.route("/tag/<tag_id>", methods=["GET", "POST"])
 @login_required
-def deck_profile(deck_id):
-    deck = Deck.query.get_or_404(deck_id)
-    if current_user.id != deck.user_id:
+def tag_profile(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    if current_user.id != tag.user_id:
         return redirect(url_for("main.index"))
-    edit_deck_form = DeckForm()
+    edit_tag_form = TagForm()
     page = request.args.get("page", 1, type=int)
-    cards = deck.cards.order_by(Card.timestamp.desc()).paginate(
+    cards = tag.cards.order_by(Tagging.timestamp.desc()).paginate(
         page, current_app.config["CARDS_PER_PAGE"], False
     )
     next_url = (
-        url_for("main.deck_profile", deck_id=deck.id, page=cards.next_num)
+        url_for("main.tag_profile", tag_id=tag.id, page=cards.next_num)
         if cards.has_next
         else None
     )
     prev_url = (
-        url_for("main.deck_profile", deck_id=deck.id, page=cards.prev_num)
+        url_for("main.tag_profile", tag_id=tag.id, page=cards.prev_num)
         if cards.has_prev
         else None
     )
+
+    ls_cards = [Card.query.filter_by(id=i.card_id).first() for i in cards.items]
     return render_template(
-        "deck_profile.html",
-        deck=deck,
-        cards=cards.items,
-        edit_deck_form=edit_deck_form,
+        "tag_profile.html",
+        tag=tag,
+        cards=ls_cards,
+        edit_tag_form=edit_tag_form,
         next_url=next_url,
         prev_url=prev_url,
     )
 
 
-@bp.route("/deck", methods=["GET", "POST"])
+@bp.route("/tag", methods=["GET", "POST"])
 @login_required
-def deck():
-    edit_deck_form = DeckForm()
-    if edit_deck_form.validate_on_submit():
-        deck = Deck(
-            name=edit_deck_form.name.data,
-            description=edit_deck_form.description.data,
+def tag():
+    edit_tag_form = TagForm()
+    if edit_tag_form.validate_on_submit():
+        tag = Tag(
+            name=edit_tag_form.name.data,
+            description=edit_tag_form.description.data,
             user_id=current_user.id,
         )
-        db.session.add(deck)
+        db.session.add(tag)
         db.session.commit()
-        flash("Your deck is added!")
-        return redirect(url_for("main.deck_profile", deck_id=deck.id))
-    return render_template(
-        "deck.html", edit_deck_form=edit_deck_form, user=current_user
-    )
+        flash("Your tag is added!")
+        return redirect(url_for("main.tag_profile", tag_id=tag.id))
+    return render_template("tag.html", edit_tag_form=edit_tag_form, user=current_user)
 
 
-@bp.route("/deck/edit_deck/<deck_id>", methods=["GET", "POST"])
+@bp.route("/tag/edit_tag/<tag_id>", methods=["GET", "POST"])
 @login_required
-def edit_deck(deck_id):
-    deck = Deck.query.get_or_404(deck_id)
-    if current_user.id != deck.user_id:
+def edit_tag(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    if current_user.id != tag.user_id:
         return redirect(url_for("main.index"))
-    edit_deck_form = DeckForm()
+    edit_tag_form = TagForm()
     if request.method == "GET":
-        edit_deck_form.name.data = deck.name
-        edit_deck_form.description.data = deck.description
-        return render_template("edit_deck.html", edit_deck_form=edit_deck_form)
-    if request.method == "POST" and edit_deck_form.validate_on_submit():
-        deck.name = edit_deck_form.name.data
-        deck.description = edit_deck_form.description.data
-        db.session.add(deck)
+        edit_tag_form.name.data = tag.name
+        edit_tag_form.description.data = tag.description
+        return render_template("edit_tag.html", edit_tag_form=edit_tag_form)
+    if request.method == "POST" and edit_tag_form.validate_on_submit():
+        tag.name = edit_tag_form.name.data
+        tag.description = edit_tag_form.description.data
+        db.session.add(tag)
         db.session.commit()
-        flash("Your deck is edited!")
-    return redirect(url_for("main.deck_profile", deck_id=deck.id))
+        flash("Your tag is edited!")
+    return redirect(url_for("main.tag_profile", tag_id=tag.id))
 
 
-@bp.route("/deck/<deck_id>/delete_deck", methods=["GET", "POST"])
+@bp.route("/tag/<tag_id>/delete_tag", methods=["GET", "POST"])
 @login_required
-def delete_deck(deck_id):
-    deck = Deck.query.get_or_404(deck_id)
-    for card in deck.cards:
+def delete_tag(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    for tagging in tag.cards:
+        card_id = tagging.card_id
+        card = Card.query.get_or_404(card_id)
         if "<img src=" in card.back and current_app.config["UPLOAD_PATH"] in card.back:
             Card.delete_card_img(card.back)
-    db.session.delete(deck)
+    db.session.delete(tag)
     db.session.commit()
-    if current_user.decks.count() > 0:
-        return redirect(url_for("main.deck"))
+    if current_user.tags.count() > 0:
+        return redirect(url_for("main.tag"))
     else:
         return redirect(url_for("main.index"))
 
@@ -362,7 +395,7 @@ def before_learning():
         lh = LearningHelper(
             num_random_learned=start_form.num_random_learned.data,
             learn_date=datetime.today(),
-            deck_id=None,
+            tag_id=None,
             user=current_user,
         )
         lh.init_session(write_new_session=True)
@@ -414,10 +447,10 @@ def update_lsf_status():
     return lsf.to_dict()
 
 
-@bp.route("/get_user_decks", methods=["GET"])
+@bp.route("/get_user_tags", methods=["GET"])
 @login_required
-def get_user_decks():
-    decks = current_user.decks.order_by(Deck.timestamp.desc()).all()
-    names = [deck.name for deck in decks]
+def get_user_tags():
+    tags = current_user.tags.order_by(Tag.timestamp.desc()).all()
+    names = [tag.name for tag in tags]
     result = {"data": names}
     return result

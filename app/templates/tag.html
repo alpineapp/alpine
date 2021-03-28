@@ -7,21 +7,21 @@
 
 <div class="row">
     <div class="col-md-3">
-        <button type='button' class='btn btn-outline-dark w-100' data-toggle='modal' data-target='#createDeckModal'>
-            Create new deck
+        <button type='button' class='btn btn-outline-dark w-100' data-toggle='modal' data-target='#createTagModal'>
+            Create new tag
         </button>
     </div>
 </div>
-<div id="createDeckModal" class="modal fade" role="dialog">
+<div id="createTagModal" class="modal fade" role="dialog">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Create deck</h5>
+                <h5 class="modal-title">Create tag</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            {% include '_edit_deck.html' %}
+            {% include '_edit_tag.html' %}
         </div>
     </div>
 
@@ -29,10 +29,10 @@
 
 <br>
 
-<h3>Deck list</h3>
+<h3>Tag list</h3>
 <div class="row">
-    {% for deck in user.get_decks() %}
-    {% include '_deck.html' %}
+    {% for tag in user.get_tags() %}
+    {% include '_tag.html' %}
     {% endfor %}
 </div>
 
