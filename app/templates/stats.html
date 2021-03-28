@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% import 'bootstrap/form.html' as wtf %}
+{% block app_content %}
+<h4 class='text-secondary'>History</h4>
+<div class="row mb-lg-5">
+  <div class="col-md-4">
+    <!-- Card -->
+    <div class="card card-hover-shadow h-100 border-primary">
+      <div class="card-body text-primary">
+        <h6 class="card-subtitle mb-2">Number of cards created</h6>
+        <div class="row align-items-center mb-1">
+          <div class="col-12">
+            <span class="card-title h2">{{ num_total_cards }}</span
+            ><span class="text-primary"> cards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Card -->
+  </div>
+  <div class="col-md-4">
+    <!-- Card -->
+    <div class="card card-hover-shadow h-100 border-primary">
+      <div class="card-body text-primary">
+        <h6 class="card-subtitle mb-2">Number of cards learnt</h6>
+        <div class="row align-items-center mb-1">
+          <div class="col-12">
+            <span class="card-title h2">{{ num_total_cards_learnt }}</span
+            ><span class="text-primary"> cards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Card -->
+  </div>
+  <div class="col-md-4">
+    <!-- Card -->
+    <div class="card card-hover-shadow h-100 border-primary">
+      <div class="card-body text-primary">
+        <h6 class="card-subtitle mb-2">Number of cards mastered</h6>
+        <div class="row align-items-center mb-1">
+          <div class="col-12">
+            <span class="card-title h2">{{ num_total_cards_mastered }}</span>
+            <span class="text-primary"> cards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Card -->
+  </div>
+</div>
+
+<h4 class='text-secondary'>Progress in last 7 days</h4>
+<div class="row mb-lg-5">
+  <div class="col-md-4">
+    <!-- Card -->
+    <div class="card card-hover-shadow h-100 border-primary">
+      <div class="card-body text-primary">
+        <h6 class="card-subtitle mb-2">Number of sessions completed</h6>
+        <div class="row align-items-center mb-1">
+          <div class="col-12">
+            <span class="card-title h2">{{ num_sessions }}</span
+            ><span class="text-primary"> sessions</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Card -->
+  </div>
+  <div class="col-md-4">
+    <!-- Card -->
+    <div class="card card-hover-shadow h-100 border-primary">
+      <div class="card-body text-primary">
+        <h6 class="card-subtitle mb-2">Number of minutes spent</h6>
+        <div class="row align-items-center mb-1">
+          <div class="col-12">
+            <span class="card-title h2">{{ total_minutes }}</span
+            ><span class="text-primary"> minutes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- End Card -->
+  </div>
+</div>
+
+<h4 class='text-secondary'>Current Streak</h4>
+<p class='text-secondary'>Finish a learn session per day to keep your streak going</p>
+<div class='text-center'>
+    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="#0275d8" class="bi bi-lightning-charge-fill mt-10" viewBox="0 0 16 16">
+        <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
+      </svg>
+    <span class="h1 text-primary" >{{ streak }}</span>
+    <span class="text-primary"> days</span>
+    <br></br>
+    <div class='row justify-content-center'>
+        {% for weekday in last_7_days_wd %}
+          {% if weekday in last_7_days_active_str %}
+          <div class='col-sm-1 text-center'>
+              {% include 'icons/big_circle_fill.html' %}
+              <p>{{ weekday }}</p>
+          </div>
+          {% else %}
+          <div class='col-sm-1 text-center'>
+              {% include 'icons/big_circle.html' %}
+              <p>{{ weekday }}</p>
+          </div>
+          {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

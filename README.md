@@ -2,8 +2,14 @@
 
 ## Set up DEV environment
 ```
+# For local development
+brew install postgresql
+python -m venv alpine
+chmod -R +x alpine
+pip install -r requirements.txt
+
+# Build local environment with Docker
 chmod -R +x scripts
-# Build environment with Docker
 ./scripts/rebuild_docker.sh
 ```
 
@@ -23,9 +29,24 @@ VS Code setting:
         "**/site-packages/**/*.py",
         "**/lib/**/*.py"
     ],
+    "python.linting.pylintArgs": [
+        "--load-plugins",
+        "pylint_flask_sqlalchemy",
+        "pylint_flask",
+    ],
 ```
 
 ## Run unit tests
+### Install chromedriver for front-end tests
+```
+# MacOS
+brew install chromedriver
+# Manually verify
+# Source: https://stackoverflow.com/questions/60362018 macos-catalinav-10-15-3-error-chromedriver-cannot-be-opened-because-the-de/64019725
+cd $(which chromedriver)/..
+xattr -d com.apple.quarantine chromedriver
+```
+### Run tests
 ```
 python function_tests.py
 ```
@@ -35,7 +56,7 @@ python function_tests.py
 # Get authorization token
 http POST http://localhost:5000/api/tokens --auth <username>:<password>
 # Call using the http Python library
-http GET http://localhost:5000/api/decks/1 "Authorization:Bearer <token>"
+http GET http://localhost:5000/api/cards/1 "Authorization:Bearer <token>"
 ```
 
 ## Deploy to PROD

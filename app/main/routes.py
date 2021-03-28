@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import imghdr
 
@@ -34,7 +34,7 @@ from app.models import (
     LearningSessionFact,
     LearnSpacedRepetition,
 )
-from app.learning import LearningHelper
+from app.learning import LearningHelper, LearningSessionBuilder
 
 
 def validate_image(stream):
@@ -387,22 +387,58 @@ def delete_tag(tag_id):
         return redirect(url_for("main.index"))
 
 
+@bp.route("/get_cards", methods=["GET"])
+@login_required
+def get_cards():
+    num_learn = request.args.get("num_learn", type=int)
+    current_app.logger.info(f"uid {current_user.id}: num_learn: {num_learn}")
+    lh = LearningHelper(
+        num_learn=num_learn,
+        num_random_learned=0,
+        learn_date=datetime.today(),
+        tag_id=None,
+        user=current_user,
+    )
+    lh.init_session(write_new_session=False)
+    cards = [card.to_dict() for card in lh.cards]
+    response = {"meta": {"status": "OK"}, "data": {"cards": cards}}
+    return response
+
+
+@bp.route("/card/display_box")
+@login_required
+def card_display_box():
+    card_id = request.args.get("card_id", type=int)
+    if not card_id:
+        raise Exception("No card_id passed")
+    card = Card.query.get_or_404(int(card_id))
+    return render_template("card.html", card=card)
+
+
 @bp.route("/before_learning", methods=["GET", "POST"])
 @login_required
 def before_learning():
     start_form = BeforeLearningForm()
     if start_form.validate_on_submit() and request.form["mode"] == "start":
-        lh = LearningHelper(
-            num_random_learned=start_form.num_random_learned.data,
-            learn_date=datetime.today(),
-            tag_id=None,
-            user=current_user,
+        cards_selected_str = request.form["cardsSelected"]
+        cards_selected = cards_selected_str.split(",")
+        cards_selected = [
+            card for card in cards_selected if card is not None and card != ""
+        ]
+        current_app.logger.info(
+            f"uid {current_user.id} - card_ids selected to learn: {cards_selected}"
         )
-        lh.init_session(write_new_session=True)
+        cards_selected = LearningHelper.parse_cards_from_selected_str(
+            cards_selected_str
+        )
+        lsb = LearningSessionBuilder(user=current_user, cards=cards_selected)
+        lsb.build()
+        lsb.write_session_data()
         return redirect(url_for("main.learning"))
     else:
         lh = LearningHelper(user=current_user)
         lh.init_session(write_new_session=False)
+        start_form.num_learn.data = len(lh.cards)
     return render_template(
         "before_learning.html",
         start_form=start_form,
@@ -454,3 +490,87 @@ def get_user_tags():
     names = [tag.name for tag in tags]
     result = {"data": names}
     return result
+
+
+@bp.route("/stats", methods=["GET"])
+@login_required
+def stats():
+    num_total_cards = len(Card.query.filter_by(user_id=current_user.id).all())
+    num_total_cards_learnt = len(
+        Card.query.join(
+            LearnSpacedRepetition, Card.learn_spaced_rep_id == LearnSpacedRepetition.id
+        )
+        .filter(Card.user_id == current_user.id, LearnSpacedRepetition.bucket > 1)
+        .all()
+    )
+    num_total_cards_mastered = len(
+        Card.query.join(
+            LearnSpacedRepetition, Card.learn_spaced_rep_id == LearnSpacedRepetition.id
+        )
+        .filter(Card.user_id == current_user.id, LearnSpacedRepetition.bucket == 6)
+        .all()
+    )
+
+    last_7_days_ms = datetime.now() - timedelta(days=7)
+    ss_list_complete_start = (
+        db.session.query(LearningSessionFact.complete_at, LearningSessionFact.start_at)
+        .filter_by(user_id=current_user.id)
+        .filter(LearningSessionFact.start_at >= last_7_days_ms)
+        .all()
+    )
+    num_sessions = len(ss_list_complete_start)
+    # Calculate minutes spent on learning in last 7 days
+    total_minutes = 0
+    for item in ss_list_complete_start:
+        if item[0] != None and item[1] != None:
+            add_minutes = (item[0] - item[1]).total_seconds() / 60
+            total_minutes = int(total_minutes + add_minutes)
+    if total_minutes < 1:
+        total_minutes = 1
+    # Calculate which day in last 7 days user learnt
+    dict_wd_alias = {
+        6: "Sun",
+        0: "Mon",
+        1: "Tue",
+        2: "Wed",
+        3: "Thu",
+        4: "Fri",
+        5: "Sat",
+    }
+    today_wd = datetime.today().weekday()
+    tail_ls_wd = [i for i in range(today_wd + 1)]
+    ls_wd = [i for i in range(today_wd + 1, 7)]
+    for weekday in tail_ls_wd:
+        ls_wd.append(weekday)
+    last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
+    ss_list_wd = [i[1].weekday() for i in ss_list_complete_start]
+    last_7_days_active = list(set(ss_list_wd))
+    last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
+    # Calculate streak
+    # TODO Change streak to count more than 7 days
+    streak = 0
+    for i in range(1, len(last_7_days_active) + 1):
+        if last_7_days_active[-i] == today_wd - (i - 1):
+            streak = streak + 1
+    return render_template(
+        "stats.html",
+        num_total_cards=num_total_cards,
+        num_total_cards_learnt=num_total_cards_learnt,
+        num_total_cards_mastered=num_total_cards_mastered,
+        num_sessions=num_sessions,
+        total_minutes=total_minutes,
+        last_7_days_wd=last_7_days_wd,
+        last_7_days_active_str=last_7_days_active_str,
+        streak=streak,
+    )
+
+
+@bp.route("/shutdown")
+def server_shutdown():
+    if not current_app.testing:
+        abort(404)
+    shutdown = request.environ.get("werkzeug.server.shutdown")
+    if not shutdown:
+        abort(500)
+    shutdown()
+    return "Shutting down..."

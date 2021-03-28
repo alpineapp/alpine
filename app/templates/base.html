@@ -29,6 +29,10 @@
     <a class="btn btn-primary mr-3" href="{{ url_for('main.tag') }}">
       {% include 'icons/tag.html' %} Inventory
     </a>
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <a class="btn btn-primary mr-3" href="{{ url_for('main.stats') }}">
+      Stats
+    </a>
     {% if g.search_form %}
     <div class="navbar-nav">
       <form
