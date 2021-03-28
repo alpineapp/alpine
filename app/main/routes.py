@@ -396,7 +396,7 @@ def get_cards():
         num_learn=num_learn,
         num_random_learned=0,
         learn_date=datetime.today(),
-        deck_id=None,
+        tag_id=None,
         user=current_user,
     )
     lh.init_session(write_new_session=False)

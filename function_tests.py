@@ -291,8 +291,8 @@ class SeleniumTestCase(FlaskClientTestCase):
                 data={"username": "admin", "password": "1"},
                 follow_redirects=True,
             )
-            deck = Deck(name="test", description="test body", user_id=user.id)
-            db.session.add(deck)
+            tag = Tag(name="test", description="test", user_id=user.id)
+            db.session.add(tag)
             db.session.flush()
             learn_spaced_rep = LearnSpacedRepetition(
                 next_date=datetime.today(),
@@ -303,11 +303,13 @@ class SeleniumTestCase(FlaskClientTestCase):
             card = Card(
                 front="front test",
                 back="back test",
-                deck_id=deck.id,
                 learn_spaced_rep_id=learn_spaced_rep.id,
                 user_id=user.id,
             )
             db.session.add(card)
+            db.session.flush()
+            tagging = Tagging(tag_id=tag.id, card_id=card.id)
+            db.session.add(tagging)
             db.session.commit()
 
             # start the Flask server in a thread
@@ -345,7 +347,7 @@ class SeleniumTestCase(FlaskClientTestCase):
             data={
                 "front": "card 2",
                 "back": "card 2 back",
-                "deck": "test",
+                "tags": "test",
                 "user_id": 1,
                 "next_date": "2021-02-14",
                 "bucket": 1,
@@ -357,7 +359,7 @@ class SeleniumTestCase(FlaskClientTestCase):
             data={
                 "front": "card 3",
                 "back": "card 3 back",
-                "deck": "test",
+                "tags": "test",
                 "user_id": 1,
                 "next_date": "2021-02-14",
                 "bucket": 1,
