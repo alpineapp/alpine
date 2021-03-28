@@ -16,12 +16,14 @@ SESSION_EXPIRE_HOUR = 24
 class LearningHelper:
     def __init__(
         self,
+        num_learn=5,
         num_random_learned=0,
         learn_date=datetime.today(),
         tag_id=None,
         user=current_user,
     ):
         self.user = user
+        self.num_learn = num_learn
         self.num_random_learned = num_random_learned
         # Change learn_date to end of day
         self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
@@ -37,6 +39,7 @@ class LearningHelper:
         }
         self.current_ls_id = None
         self.ls_facts = []
+        self.lsb: LearningSessionBuilder = None
 
     def load_new_session(self):
         """Get cards to learn today
@@ -191,14 +194,54 @@ class LearningHelper:
 
     def _build(self):
         random.shuffle(self.cards)
+        self.cards = self.cards[: self.num_learn]
+        self.lsb = LearningSessionBuilder(user=self.user, cards=self.cards)
+        self.lsb.build()
+        self.stats = self.lsb.stats
+        self.current_ls_id = self.lsb.current_ls_id
+        self.ls_facts = self.lsb.ls_facts
+
+    @staticmethod
+    def _calc_duration(num_cards):
+        return num_cards * AVG_CARD_DURATION_SEC / 60
+
+    def _write_new_session(self):
+        if self.lsb is not None:
+            self.lsb.write_session_data()
+        else:
+            raise Exception("LearningSessionBuilder is not defined")
+
+    @staticmethod
+    def parse_cards_from_selected_str(cards_str: str) -> List[Card]:
+        cards = cards_str.split(",")
+        if len(cards) == 0:
+            return []
+        cards = cards[1:]
+        cards = [Card.query.get(int(card)) for card in cards]
+        return cards
+
+
+class LearningSessionBuilder:
+    def __init__(self, user, cards: List[Card]):
+        self.user = user
+        self.cards = cards
+
+        self.stats = {
+            "num_total": None,
+            "num_minutes": None,
+        }
+        self.current_ls_id = None
+        self.ls_facts = []
+
+    def build(self):
         self.stats["num_total"] = len(self.cards)
-        self.stats["num_minutes"] = self._calc_duration(len(self.cards))
+        self.stats["num_minutes"] = LearningHelper._calc_duration(len(self.cards))
 
         # build LearningSessionFact
         current_max_ls_id = db.session.query(
             func.max(LearningSessionFact.ls_id)
         ).scalar()
-        if current_max_ls_id:
+        if current_max_ls_id is not None:
             new_ls_id = current_max_ls_id + 1
         else:
             new_ls_id = 0
@@ -213,14 +256,9 @@ class LearningHelper:
                 number=number,
             )
             self.ls_facts.append(lsf)
-
         return self
 
-    @staticmethod
-    def _calc_duration(num_cards):
-        return num_cards * AVG_CARD_DURATION_SEC / 60
-
-    def _write_new_session(self):
+    def write_session_data(self):
         self.user.set_current_ls_id(self.current_ls_id)
         current_app.logger.info(f"self.user.current_ls_id: {self.user.current_ls_id}")
         db.session.add(self.user)
