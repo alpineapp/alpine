@@ -26,13 +26,17 @@
     <span class="navbar-toggler-icon"></span>
   </button>
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    {% if current_user.is_authenticated %}
     <a class="btn btn-primary mr-3" href="{{ url_for('main.tag') }}">
       {% include 'icons/tag.html' %} Inventory
     </a>
+    {% endif %}
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    {% if current_user.is_authenticated %}
     <a class="btn btn-primary mr-3" href="{{ url_for('main.stats') }}">
       Stats
     </a>
+    {% endif %}
     {% if g.search_form %}
     <div class="navbar-nav">
       <form

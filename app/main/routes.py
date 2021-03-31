@@ -527,6 +527,7 @@ def stats():
             total_minutes = int(total_minutes + add_minutes)
     if total_minutes < 1:
         total_minutes = 1
+
     # Calculate which day in last 7 days user learnt
     dict_wd_alias = {
         6: "Sun",
@@ -543,14 +544,24 @@ def stats():
     for weekday in tail_ls_wd:
         ls_wd.append(weekday)
     last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
-    ss_list_wd = [i[1].weekday() for i in ss_list_complete_start]
+    ss_list_wd = [(i[1] + timedelta(hours=7)).weekday() for i in ss_list_complete_start]
     last_7_days_active = list(set(ss_list_wd))
     last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
+
     # Calculate streak
-    # TODO Change streak to count more than 7 days
+    ss_list_complete_start_full = (
+        db.session.query(LearningSessionFact.complete_at, LearningSessionFact.start_at)
+        .filter_by(user_id=current_user.id)
+        .all()
+    )
+    learning_active_days = sorted(list(set([
+        (i[1] + timedelta(hours=7)).date() for i in ss_list_complete_start_full
+    ])))
     streak = 0
-    for i in range(1, len(last_7_days_active) + 1):
-        if last_7_days_active[-i] == today_wd - (i - 1):
+    for i in range(1, len(learning_active_days) + 1):
+        if learning_active_days[-i] == datetime.today().date() - timedelta(
+            days=i - 1
+        ):
             streak = streak + 1
     return render_template(
         "stats.html",
