@@ -522,7 +522,7 @@ def stats():
     # Calculate minutes spent on learning in last 7 days
     total_minutes = 0
     for item in ss_list_complete_start:
-        if item[0] != None and item[1] != None:
+        if item[0] is not None and item[1] is not None:
             add_minutes = (item[0] - item[1]).total_seconds() / 60
             total_minutes = int(total_minutes + add_minutes)
     if total_minutes < 1:
@@ -544,7 +544,7 @@ def stats():
     for weekday in tail_ls_wd:
         ls_wd.append(weekday)
     last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
-    ss_list_wd = [(i[1] + timedelta(hours=7)).weekday() for i in ss_list_complete_start]
+    ss_list_wd = [(i[1] + timedelta(hours=7)).weekday() for i in ss_list_complete_start if i[1] is not None]
     last_7_days_active = list(set(ss_list_wd))
     last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
 
@@ -555,7 +555,7 @@ def stats():
         .all()
     )
     learning_active_days = sorted(list(set([
-        (i[1] + timedelta(hours=7)).date() for i in ss_list_complete_start_full
+        (i[1] + timedelta(hours=7)).date() for i in ss_list_complete_start_full if i[1] is not None
     ])))
     streak = 0
     for i in range(1, len(learning_active_days) + 1):
