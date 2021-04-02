@@ -1,0 +1,11 @@
+ECRET_KEY="klxd"
+MAIL_SERVER="smtp.googlemail.com"
+MAIL_PORT=587
+MAIL_USE_TLS="true"
+MAIL_USERNAME="binhalpine@gmail.com"
+MAIL_PASSWORD="123banhbao"
+POSTGRES_USER="alpine"
+POSTGRES_PASSWORD="klxd"
+POSTGRES_DB="alpine"
+TINYMCE_API_KEY="2wi61z0e13atzggml3fpdvmhr6ioo7zb4x0hz8wbo7mfthha"
+DISK_PATH="/home/alpine/data"
