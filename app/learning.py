@@ -6,7 +6,7 @@ from flask_login import current_user
 from flask import current_app
 from sqlalchemy import func
 
-from app.models import Card, LearningSessionFact, LearnSpacedRepetition
+from app.models import Card, LearningSessionFact, LearnSpacedRepetition, Tagging
 from app import db
 
 AVG_CARD_DURATION_SEC = 60
@@ -28,9 +28,7 @@ class LearningHelper:
         # Change learn_date to end of day
         self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
         self.tag_id = tag_id
-        self.user_cards = user.cards
-        if tag_id:
-            self.user_cards = self.user_cards.filter(Card.tag_id == tag_id)
+        self.card_pool = self._get_card_pool()
 
         self.cards = []
         self.stats = {
@@ -137,6 +135,14 @@ class LearningHelper:
             cards = lsf_query.filter_by(is_ok=False)
         return cards.all()
 
+    def _get_card_pool(self):
+        if self.tag_id:
+            taggings = Tagging.query.filter_by(tag_id=self.tag_id).all()
+            card_pool = (tagging.card_id for tagging in taggings)
+            card_pool = Card.query.filter(Card.id.in_(card_pool))
+            return card_pool
+        return self.user.cards
+
     @staticmethod
     def _set_card_next_date(card: Card):
         if card.learn_spaced_rep.bucket >= 6:
@@ -176,8 +182,8 @@ class LearningHelper:
         return is_expire
 
     def _collect_tasks_today(self):
-        cards = (
-            self.user_cards.join(
+        cards_query = (
+            self.card_pool.join(
                 LearnSpacedRepetition,
                 Card.learn_spaced_rep_id == LearnSpacedRepetition.id,
             )
@@ -185,9 +191,10 @@ class LearningHelper:
             .filter(
                 LearnSpacedRepetition.bucket < LearnSpacedRepetition.get_max_bucket()
             )
-            .all()
         )
-        self.cards.extend(cards)
+
+        cards_query = cards_query.all()
+        self.cards.extend(cards_query)
 
     def _collect_random_learned(self):
         pass
