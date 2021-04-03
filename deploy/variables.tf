@@ -1,9 +1,9 @@
 variable "prefix" {
-  default = "raad"
+  default = "alpine"
 }
 
 variable "project" {
-  default = "recipe-app-api-devops"
+  default = "alpineapp"
 }
 
 variable "contact" {
@@ -19,17 +19,12 @@ variable "db_password" {
 }
 
 variable "bastion_key_name" {
-  default = "recipe-app-api-devops-bastion"
+  default = "nghia-alpine-bastion"
 }
 
 variable "ecr_image_api" {
   description = "ECR image for API"
-  default     = "191215300852.dkr.ecr.us-east-1.amazonaws.com/recipe-app-api-devops:latest"
-}
-
-variable "ecr_image_proxy" {
-  description = "ECR image for proxy"
-  default     = "191215300852.dkr.ecr.us-east-1.amazonaws.com/recipe-app-api-proxy:latest"
+  default     = "291857152056.dkr.ecr.ap-southeast-1.amazonaws.com/alpineapp-api:latest"
 }
 
 variable "flask_secret_key" {
