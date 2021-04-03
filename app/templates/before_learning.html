@@ -7,7 +7,12 @@
     <!-- Card -->
     <div class="card card-hover-shadow h-100">
       <div class="card-body">
-        <h6 class="card-subtitle mb-2 text-secondary">Objective</h6>
+        {% if tag %}
+          <h6 class="card-subtitle mb-2 text-secondary">Total cards in tag {{ tag.name }}</h6>
+        {% else %}
+          <h6 class="card-subtitle mb-2 text-secondary">Objective</h6>
+        {% endif %}
+        <input type="hidden" id="inputTagId" name="tag_id" value="{{ tag.id }}">
         <div class="row align-items-center mb-1">
           <div class="col-12">
             <span class="card-title h2">{{ lh.stats['num_total'] }}</span
@@ -82,14 +87,20 @@
 {% block scripts %} {{ super() }}
 <script>
   $(".cardBack").hide();
+  console.log($("#inputTagId").val());
 
   function getCards() {
     /* Call to back-end to get a random list of cards based on user input num learn
     */
     let numLearn = $("#inputNumLearn").val();
+    let url = `{{ url_for('main.get_cards') }}?num_learn=${numLearn}`
+    let tagId = $("#inputTagId").val();
+    console.log(`tagId: ${tagId}`);
+    if ( tagId ) {
+      url += `&tag_id=${tagId}`
+    }
     $.ajax({
-      url:
-        "{{ url_for('main.get_cards') }}?num_learn=" + numLearn,
+      url: url,
       type: "GET",
     })
       .done(function (response) {
