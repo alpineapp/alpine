@@ -5,9 +5,10 @@ on:
     branches: [ develop ]
     paths-ignore:
       - 'deploy/**'
+      - '.github/**'
 
 jobs:
-  deploy_stag:
+  deploy_test:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
