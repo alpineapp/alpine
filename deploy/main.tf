@@ -10,7 +10,6 @@ terraform {
 
 provider "aws" {
   region  = "ap-southeast-1"
-  version = "~> 3.34.0"
 }
 
 locals {
