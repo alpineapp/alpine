@@ -128,13 +128,13 @@ resource "aws_security_group" "ecs_service" {
 #   }
 # }
 
-# data "template_file" "ecs_s3_write_policy" {
-#   template = file("./templates/ecs/s3-write-policy.json.tpl")
+data "template_file" "ecs_s3_write_policy" {
+  template = file("./templates/ecs/s3-write-policy.json.tpl")
 
-#   vars = {
-#     bucket_arn = aws_s3_bucket.app_public_files.arn
-#   }
-# }
+  vars = {
+    bucket_arn = aws_s3_bucket.app_public_files.arn
+  }
+}
 
 resource "aws_iam_policy" "ecs_s3_access" {
   name        = "${local.prefix}-AppS3AcessPolicy"
