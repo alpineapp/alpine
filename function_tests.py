@@ -291,27 +291,52 @@ class SeleniumTestCase(FlaskClientTestCase):
                 data={"username": "admin", "password": "1"},
                 follow_redirects=True,
             )
-            tag = Tag(name="test", description="test", user_id=user.id)
-            db.session.add(tag)
-            db.session.flush()
-            learn_spaced_rep = LearnSpacedRepetition(
-                next_date=datetime.today(),
-                bucket=1,
+            cls.flask_client.post(
+                "/tag",
+                data={"name": "test", "description": "test description"},
+                follow_redirects=True,
             )
-            db.session.add(learn_spaced_rep)
-            db.session.flush()
-            card = Card(
-                front="front test",
-                back="back test",
-                learn_spaced_rep_id=learn_spaced_rep.id,
-                user_id=user.id,
+            cls.flask_client.post(
+                "/1/create_card",
+                data={
+                    "front": "card 1",
+                    "back": "card 1 back",
+                    "tags": "test",
+                    "user_id": 1,
+                    "next_date": "2021-02-14",
+                    "bucket": 1,
+                },
+                follow_redirects=True,
             )
-            db.session.add(card)
-            db.session.flush()
-            tagging = Tagging(tag_id=tag.id, card_id=card.id)
-            db.session.add(tagging)
-            db.session.commit()
-
+            cls.flask_client.post(
+                "/1/create_card",
+                data={
+                    "front": "card 2",
+                    "back": "card 2 back",
+                    "tags": "test",
+                    "user_id": 1,
+                    "next_date": "2021-02-14",
+                    "bucket": 1,
+                },
+                follow_redirects=True,
+            )
+            cls.flask_client.post(
+                "/tag",
+                data={"name": "test 2", "description": "test 2 description"},
+                follow_redirects=True,
+            )
+            cls.flask_client.post(
+                "/2/create_card",
+                data={
+                    "front": "card 3",
+                    "back": "card 3 back",
+                    "tags": "test 2",
+                    "user_id": 1,
+                    "next_date": "2021-02-14",
+                    "bucket": 1,
+                },
+                follow_redirects=True,
+            )
             # start the Flask server in a thread
             cls.server_thread = threading.Thread(
                 target=cls.app.run,
@@ -341,31 +366,9 @@ class SeleniumTestCase(FlaskClientTestCase):
     def tearDown(self):
         pass
 
+
+class RandomSelectLearnCardTestCase(SeleniumTestCase):
     def test_random_selected_cards_to_learn(self):
-        self.flask_client.post(
-            "/1/create_card",
-            data={
-                "front": "card 2",
-                "back": "card 2 back",
-                "tags": "test",
-                "user_id": 1,
-                "next_date": "2021-02-14",
-                "bucket": 1,
-            },
-            follow_redirects=True,
-        )
-        self.flask_client.post(
-            "/1/create_card",
-            data={
-                "front": "card 3",
-                "back": "card 3 back",
-                "tags": "test",
-                "user_id": 1,
-                "next_date": "2021-02-14",
-                "bucket": 1,
-            },
-            follow_redirects=True,
-        )
         total_cards = Card.query.count()
         self.assertEqual(total_cards, 3)
         # Sign in
@@ -375,14 +378,13 @@ class SeleniumTestCase(FlaskClientTestCase):
         self.client.find_element_by_name("submit").click()
         self.assertTrue(re.search("Hi, admin!", self.client.page_source))
 
-        # Learn
         self.client.get("http://localhost:5000/before_learning")
         self.assertTrue(re.search("Today's Objective", self.client.page_source))
         # Wait ajax
         time.sleep(0.1)
         # Check return correct amount of cards
         cards_displayed = re.findall(
-            """id="cardContainer" card_id=""",
+            """id="cardContainer" card_id=\"(\d+)\"""",
             self.client.page_source,
         )
         self.assertEqual(len(cards_displayed), 3)
@@ -411,6 +413,55 @@ class SeleniumTestCase(FlaskClientTestCase):
         card = card[0]
         card = str(card)
         self.assertEqual(card, cards_displayed[1])
+
+
+class LearnByTagTestCase(SeleniumTestCase):
+    def test_learn_by_tag(self):
+        # Sign in
+        self.client.get("http://localhost:5000")
+        self.client.find_element_by_name("username").send_keys("admin")
+        self.client.find_element_by_name("password").send_keys("1")
+        self.client.find_element_by_name("submit").click()
+        self.assertTrue(re.search("Hi, admin!", self.client.page_source))
+
+        self.client.get("http://localhost:5000/tag")
+        self.assertTrue(re.search("Tag list", self.client.page_source))
+        self.client.find_element_by_link_text("test").click()
+        self.client.find_element_by_id("btnLearn").click()
+        # Check navigating to before_learning
+        self.assertTrue(re.search("Total cards in tag", self.client.page_source))
+        # Wait ajax
+        time.sleep(0.1)
+
+        # Check return correct amount of cards
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        print(cards_displayed)
+        self.assertEqual(len(cards_displayed), 2)
+        self.assertTrue("1" in cards_displayed)
+        self.assertTrue("2" in cards_displayed)
+
+        # Test feature Random number cards to learn
+        self.client.find_element_by_name("num_learn").clear()
+        self.client.find_element_by_name("num_learn").send_keys("1")
+        self.client.find_element_by_id("btnRandomCardList").click()
+        time.sleep(0.1)
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 1)
+
+        # Check if cards during learn are the ones seen before
+        self.client.find_element_by_id("submit").click()
+        card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
+        card = card[0]
+        card = str(card)
+        self.assertEqual(card, cards_displayed[0])
+        self.client.find_element_by_id("ok-btn").click()
+        self.client.find_element_by_name("next").click()
 
 
 if __name__ == "__main__":
