@@ -4,37 +4,37 @@
 #   tags = local.common_tags
 # }
 
-# resource "aws_iam_policy" "task_execution_role_policy" {
-#   name        = "${local.prefix}-task-exec-role-policy"
-#   path        = "/"
-#   description = "Allow retrieving of images and adding to logs"
-#   policy      = file("./templates/ecs/task-exec-role.json")
-# }
+resource "aws_iam_policy" "task_execution_role_policy" {
+  name        = "${local.prefix}-task-exec-role-policy"
+  path        = "/"
+  description = "Allow retrieving of images and adding to logs"
+  policy      = file("./templates/ecs/task-exec-role.json")
+}
 
-# resource "aws_iam_role" "task_execution_role" {
-#   name               = "${local.prefix}-task-exec-role"
-#   assume_role_policy = file("./templates/ecs/assume-role-policy.json")
+resource "aws_iam_role" "task_execution_role" {
+  name               = "${local.prefix}-task-exec-role"
+  assume_role_policy = file("./templates/ecs/assume-role-policy.json")
 
-#   tags = local.common_tags
-# }
+  tags = local.common_tags
+}
 
-# resource "aws_iam_role_policy_attachment" "task_execution_role" {
-#   role       = aws_iam_role.task_execution_role.name
-#   policy_arn = aws_iam_policy.task_execution_role_policy.arn
-# }
+resource "aws_iam_role_policy_attachment" "task_execution_role" {
+  role       = aws_iam_role.task_execution_role.name
+  policy_arn = aws_iam_policy.task_execution_role_policy.arn
+}
 
-# resource "aws_iam_role" "app_iam_role" {
-#   name               = "${local.prefix}-api-task"
-#   assume_role_policy = file("./templates/ecs/assume-role-policy.json")
+resource "aws_iam_role" "app_iam_role" {
+  name               = "${local.prefix}-api-task"
+  assume_role_policy = file("./templates/ecs/assume-role-policy.json")
 
-#   tags = local.common_tags
-# }
+  tags = local.common_tags
+}
 
-# resource "aws_cloudwatch_log_group" "ecs_task_logs" {
-#   name = "${local.prefix}-api"
+resource "aws_cloudwatch_log_group" "ecs_task_logs" {
+  name = "${local.prefix}-api"
 
-#   tags = local.common_tags
-# }
+  tags = local.common_tags
+}
 
 # data "template_file" "api_container_definitions" {
 #   template = file("templates/ecs/container-definitions.json.tpl")
@@ -72,39 +72,39 @@
 # }
 
 
-# resource "aws_security_group" "ecs_service" {
-#   description = "Access for the ECS service"
-#   name        = "${local.prefix}-ecs-service"
-#   vpc_id      = aws_vpc.main.id
+resource "aws_security_group" "ecs_service" {
+  description = "Access for the ECS service"
+  name        = "${local.prefix}-ecs-service"
+  vpc_id      = aws_vpc.main.id
 
-#   egress {
-#     from_port   = 443
-#     to_port     = 443
-#     protocol    = "tcp"
-#     cidr_blocks = ["0.0.0.0/0"]
-#   }
+  egress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
-#   egress {
-#     from_port = 5432
-#     to_port   = 5432
-#     protocol  = "tcp"
-#     cidr_blocks = [
-#       aws_subnet.private_a.cidr_block,
-#       aws_subnet.private_b.cidr_block
-#     ]
-#   }
+  egress {
+    from_port = 5432
+    to_port   = 5432
+    protocol  = "tcp"
+    cidr_blocks = [
+      aws_subnet.private_a.cidr_block,
+      aws_subnet.private_b.cidr_block
+    ]
+  }
 
-#   ingress {
-#     from_port = 8000
-#     to_port   = 8000
-#     protocol  = "tcp"
-#     security_groups = [
-#       aws_security_group.lb.id
-#     ]
-#   }
+  ingress {
+    from_port = 5000
+    to_port   = 5000
+    protocol  = "tcp"
+    security_groups = [
+      aws_security_group.lb.id
+    ]
+  }
 
-#   tags = local.common_tags
-# }
+  tags = local.common_tags
+}
 
 # resource "aws_ecs_service" "api" {
 #   name            = "${local.prefix}-api"
@@ -136,15 +136,15 @@
 #   }
 # }
 
-# resource "aws_iam_policy" "ecs_s3_access" {
-#   name        = "${local.prefix}-AppS3AcessPolicy"
-#   path        = "/"
-#   description = "Allow access to the recipe app S3 Bucket"
+resource "aws_iam_policy" "ecs_s3_access" {
+  name        = "${local.prefix}-AppS3AcessPolicy"
+  path        = "/"
+  description = "Allow access to the recipe app S3 Bucket"
 
-#   policy = data.template_file.ecs_s3_write_policy.rendered
-# }
+  policy = data.template_file.ecs_s3_write_policy.rendered
+}
 
-# resource "aws_iam_role_policy_attachment" "ecs_s3_access" {
-#   role       = aws_iam_role.app_iam_role.name
-#   policy_arn = aws_iam_policy.ecs_s3_access.arn
-# }
+resource "aws_iam_role_policy_attachment" "ecs_s3_access" {
+  role       = aws_iam_role.app_iam_role.name
+  policy_arn = aws_iam_policy.ecs_s3_access.arn
+}
