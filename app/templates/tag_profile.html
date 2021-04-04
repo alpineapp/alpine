@@ -10,8 +10,8 @@
         <p class="lead text-muted">{{ tag.cards.count() }} cards</p>
         <p>
             <a href="{{ url_for('main.create_card', tag_id=tag.id) }}" class="col-sm-2 btn btn-outline-secondary m-1">Add card</a>
-            <a href="{{ url_for('main.before_learning', tag_id=tag.id) }}" id="btnLearn" class="col-sm-2 btn btn-primary m-1">Learn</a>
-            <button type='button' class="col-sm-2 btn btn-danger m-1" data-toggle='modal' data-target='#deleteTagModal'>
+            <a href="{{ url_for('main.learning', tag_id=tag.id) }}" class="col-sm-2 btn btn-primary m-1">Learn</a>
+            <button type='button' class="col-sm-2 btn btn-danger m-1" data-toggle='modal' data-target='#deletetagModal'>
                 Delete tag
             </button>
             <a href="{{ url_for('main.edit_tag', tag_id=tag.id) }}" class="col-sm-2 btn btn-outline-secondary m-1">Edit tag</a>
