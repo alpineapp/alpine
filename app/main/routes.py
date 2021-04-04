@@ -391,15 +391,12 @@ def delete_tag(tag_id):
 @login_required
 def get_cards():
     num_learn = request.args.get("num_learn", type=int)
-    tag_id = request.args.get("tag_id", type=int)
-    current_app.logger.info(
-        f"uid {current_user.id}: num_learn: {num_learn}, tag_id: {tag_id}"
-    )
+    current_app.logger.info(f"uid {current_user.id}: num_learn: {num_learn}")
     lh = LearningHelper(
         num_learn=num_learn,
         num_random_learned=0,
         learn_date=datetime.today(),
-        tag_id=tag_id,
+        tag_id=None,
         user=current_user,
     )
     lh.init_session(write_new_session=False)
@@ -422,7 +419,6 @@ def card_display_box():
 @login_required
 def before_learning():
     start_form = BeforeLearningForm()
-    tag = None
     if start_form.validate_on_submit() and request.form["mode"] == "start":
         cards_selected_str = request.form["cardsSelected"]
         cards_selected = cards_selected_str.split(",")
@@ -440,16 +436,13 @@ def before_learning():
         lsb.write_session_data()
         return redirect(url_for("main.learning"))
     else:
-        tag_id = request.args.get("tag_id", type=int)
-        tag = Tag.query.get(tag_id)
-        lh = LearningHelper(user=current_user, tag_id=tag_id)
+        lh = LearningHelper(user=current_user)
         lh.init_session(write_new_session=False)
         start_form.num_learn.data = len(lh.cards)
     return render_template(
         "before_learning.html",
         start_form=start_form,
         lh=lh,
-        tag=tag,
     )
 
 
@@ -551,11 +544,7 @@ def stats():
     for weekday in tail_ls_wd:
         ls_wd.append(weekday)
     last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
-    ss_list_wd = [
-        (i[1] + timedelta(hours=7)).weekday()
-        for i in ss_list_complete_start
-        if i[1] is not None
-    ]
+    ss_list_wd = [(i[1] + timedelta(hours=7)).weekday() for i in ss_list_complete_start if i[1] is not None]
     last_7_days_active = list(set(ss_list_wd))
     last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
 
@@ -565,20 +554,14 @@ def stats():
         .filter_by(user_id=current_user.id)
         .all()
     )
-    learning_active_days = sorted(
-        list(
-            set(
-                [
-                    (i[1] + timedelta(hours=7)).date()
-                    for i in ss_list_complete_start_full
-                    if i[1] is not None
-                ]
-            )
-        )
-    )
+    learning_active_days = sorted(list(set([
+        (i[1] + timedelta(hours=7)).date() for i in ss_list_complete_start_full if i[1] is not None
+    ])))
     streak = 0
     for i in range(1, len(learning_active_days) + 1):
-        if learning_active_days[-i] == datetime.today().date() - timedelta(days=i - 1):
+        if learning_active_days[-i] == datetime.today().date() - timedelta(
+            days=i - 1
+        ):
             streak = streak + 1
     return render_template(
         "stats.html",
