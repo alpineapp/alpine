@@ -397,8 +397,6 @@ def get_cards():
     )
     lh = LearningHelper(
         num_learn=num_learn,
-        num_random_learned=0,
-        learn_date=datetime.today(),
         tag_id=tag_id,
         user=current_user,
     )

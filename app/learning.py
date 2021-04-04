@@ -10,7 +10,7 @@ from app.models import Card, LearningSessionFact, LearnSpacedRepetition, Tagging
 from app import db
 
 AVG_CARD_DURATION_SEC = 60
-SESSION_EXPIRE_HOUR = 24
+SESSION_EXPIRE_MINUTE = 5
 
 
 class LearningHelper:
@@ -73,10 +73,7 @@ class LearningHelper:
         current_app.logger.info(
             f"uid {self.user.id}: last_session_status = {last_session_status}"
         )
-        if last_session_status in [
-            "complete",
-            "expire",
-        ]:
+        if last_session_status in ["complete", "expire", "outdated"]:
             self.load_new_session()
             if write_new_session:
                 self._write_new_session()
@@ -92,6 +89,12 @@ class LearningHelper:
             or self._session_complete(ls_id)
         ):
             return "complete"
+        user_latest_card_time = current_user.get_latest_card().timestamp
+        ls_last_created_time = (
+            LearningSessionFact.query.filter_by(ls_id=ls_id).first().created_at
+        )
+        if user_latest_card_time > ls_last_created_time:
+            return "outdated"
         if self._session_expire(ls_id):
             return "expire"
         else:
@@ -177,7 +180,7 @@ class LearningHelper:
             begin_time = last_ls_fact_complete.complete_at
         else:
             begin_time = last_ls_fact_complete.created_at
-        expire_at = begin_time + timedelta(hours=SESSION_EXPIRE_HOUR)
+        expire_at = begin_time + timedelta(minutes=SESSION_EXPIRE_MINUTE)
         is_expire = datetime.utcnow() > expire_at
         return is_expire
 

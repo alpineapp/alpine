@@ -381,7 +381,7 @@ class RandomSelectLearnCardTestCase(SeleniumTestCase):
         self.assertTrue(re.search("Hi, admin!", self.client.page_source))
 
         self.client.get("http://localhost:5000/before_learning")
-        self.assertTrue(re.search("Today's Objective", self.client.page_source))
+        self.assertTrue(re.search("Objective", self.client.page_source))
         # Wait ajax
         time.sleep(0.1)
         # Check return correct amount of cards

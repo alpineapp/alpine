@@ -211,6 +211,9 @@ class User(UserMixin, db.Model):
     def set_current_ls_id(self, current_ls_id: int):
         self.current_ls_id = current_ls_id
 
+    def get_latest_card(self):
+        return self.cards.order_by(Card.timestamp.desc()).first()
+
 
 class Tagging(db.Model):
     tag_id = db.Column(db.Integer, db.ForeignKey("tag.id"), primary_key=True)
