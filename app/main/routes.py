@@ -392,13 +392,7 @@ def delete_tag(tag_id):
 def get_cards():
     num_learn = request.args.get("num_learn", type=int)
     current_app.logger.info(f"uid {current_user.id}: num_learn: {num_learn}")
-    lh = LearningHelper(
-        num_learn=num_learn,
-        num_random_learned=0,
-        learn_date=datetime.today(),
-        tag_id=None,
-        user=current_user,
-    )
+    lh = LearningHelper(user=current_user, num_learn=num_learn)
     lh.init_session(write_new_session=False)
     cards = [card.to_dict() for card in lh.cards]
     response = {"meta": {"status": "OK"}, "data": {"cards": cards}}
@@ -544,7 +538,11 @@ def stats():
     for weekday in tail_ls_wd:
         ls_wd.append(weekday)
     last_7_days_wd = [dict_wd_alias[i] for i in ls_wd]
-    ss_list_wd = [(i[1] + timedelta(hours=7)).weekday() for i in ss_list_complete_start if i[1] is not None]
+    ss_list_wd = [
+        (i[1] + timedelta(hours=7)).weekday()
+        for i in ss_list_complete_start
+        if i[1] is not None
+    ]
     last_7_days_active = list(set(ss_list_wd))
     last_7_days_active_str = [dict_wd_alias[i] for i in last_7_days_active]
 
@@ -554,14 +552,20 @@ def stats():
         .filter_by(user_id=current_user.id)
         .all()
     )
-    learning_active_days = sorted(list(set([
-        (i[1] + timedelta(hours=7)).date() for i in ss_list_complete_start_full if i[1] is not None
-    ])))
+    learning_active_days = sorted(
+        list(
+            set(
+                [
+                    (i[1] + timedelta(hours=7)).date()
+                    for i in ss_list_complete_start_full
+                    if i[1] is not None
+                ]
+            )
+        )
+    )
     streak = 0
     for i in range(1, len(learning_active_days) + 1):
-        if learning_active_days[-i] == datetime.today().date() - timedelta(
-            days=i - 1
-        ):
+        if learning_active_days[-i] == datetime.today().date() - timedelta(days=i - 1):
             streak = streak + 1
     return render_template(
         "stats.html",
