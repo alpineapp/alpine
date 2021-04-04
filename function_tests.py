@@ -370,6 +370,8 @@ class SeleniumTestCase(FlaskClientTestCase):
 class RandomSelectLearnCardTestCase(SeleniumTestCase):
     def test_random_selected_cards_to_learn(self):
         total_cards = Card.query.count()
+        for card in Card.query.all():
+            print(card)
         self.assertEqual(total_cards, 3)
         # Sign in
         self.client.get("http://localhost:5000")
