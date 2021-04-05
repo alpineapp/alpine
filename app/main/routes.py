@@ -391,8 +391,15 @@ def delete_tag(tag_id):
 @login_required
 def get_cards():
     num_learn = request.args.get("num_learn", type=int)
-    current_app.logger.info(f"uid {current_user.id}: num_learn: {num_learn}")
-    lh = LearningHelper(user=current_user, num_learn=num_learn)
+    tag_id = request.args.get("tag_id", type=int)
+    current_app.logger.info(
+        f"uid {current_user.id}: num_learn: {num_learn}, tag_id: {tag_id}"
+    )
+    lh = LearningHelper(
+        num_learn=num_learn,
+        tag_id=tag_id,
+        user=current_user,
+    )
     lh.init_session(write_new_session=False)
     cards = [card.to_dict() for card in lh.cards]
     response = {"meta": {"status": "OK"}, "data": {"cards": cards}}
@@ -413,6 +420,7 @@ def card_display_box():
 @login_required
 def before_learning():
     start_form = BeforeLearningForm()
+    tag = None
     if start_form.validate_on_submit() and request.form["mode"] == "start":
         cards_selected_str = request.form["cardsSelected"]
         cards_selected = cards_selected_str.split(",")
@@ -430,13 +438,16 @@ def before_learning():
         lsb.write_session_data()
         return redirect(url_for("main.learning"))
     else:
-        lh = LearningHelper(user=current_user)
+        tag_id = request.args.get("tag_id", type=int)
+        tag = Tag.query.get(tag_id)
+        lh = LearningHelper(user=current_user, tag_id=tag_id)
         lh.init_session(write_new_session=False)
         start_form.num_learn.data = len(lh.cards)
     return render_template(
         "before_learning.html",
         start_form=start_form,
         lh=lh,
+        tag=tag,
     )
 
 
@@ -456,7 +467,7 @@ def learning():
         "learning.html",
         form=form,
         lsf=lsf,
-        size=len(lh.cards),
+        size=len(lh.ls_facts),
         cursor=lsf.number,
     )
 
