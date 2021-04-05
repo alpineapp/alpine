@@ -17,14 +17,12 @@ class LearningHelper:
     def __init__(
         self,
         num_learn=5,
-        num_random_learned=0,
         learn_date=datetime.today(),
         tag_id=None,
         user=current_user,
     ):
         self.user = user
         self.num_learn = num_learn
-        self.num_random_learned = num_random_learned
         # Change learn_date to end of day
         self.learn_date = learn_date.replace(hour=23, minute=59, second=59)
         self.tag_id = tag_id
@@ -45,15 +43,12 @@ class LearningHelper:
         Args:
             learn_date ([date, string], optional): target learning date. Defaults
                 to today.
-            num_random (int, optional): number of random complete cards to
-                relearn today. Defaults to 5.
 
         Returns:
             [List[int]]: list of card ids
         """
         current_app.logger.info(f"uid {self.user.id}: Loading new Learning Session...")
         self._collect_tasks_today()
-        self._collect_random_learned()
         self._build()
         return self
 
@@ -198,9 +193,6 @@ class LearningHelper:
 
         cards_query = cards_query.all()
         self.cards.extend(cards_query)
-
-    def _collect_random_learned(self):
-        pass
 
     def _build(self):
         random.shuffle(self.cards)
