@@ -61,7 +61,7 @@ class LearningHelper:
             "num_total": len(ls_facts_left),
             "num_minutes": self._calc_duration(len(ls_facts_left)),
         }
-        self.cards = [lsf.card for lsf in self.ls_facts]
+        self.cards = [lsf.card for lsf in ls_facts_left]
 
     def init_session(self, write_new_session=False):
         last_session_status = self.get_last_session_status()

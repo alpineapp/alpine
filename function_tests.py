@@ -466,5 +466,65 @@ class LearnByTagTestCase(SeleniumTestCase):
         self.client.find_element_by_name("next").click()
 
 
+class ResumeLearningTestCase(SeleniumTestCase):
+    def test_resume_learning(self):
+        # Sign in
+        self.client.get("http://localhost:5000")
+        self.client.find_element_by_name("username").send_keys("admin")
+        self.client.find_element_by_name("password").send_keys("1")
+        self.client.find_element_by_name("submit").click()
+        self.assertTrue(re.search("Hi, admin!", self.client.page_source))
+
+        self.client.get("http://localhost:5000/before_learning")
+        self.assertTrue(re.search("Objective", self.client.page_source))
+        # Wait ajax
+        time.sleep(0.1)
+        # Check return correct amount of cards
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 3)
+
+        # Test feature Random number cards to learn
+        self.client.find_element_by_name("num_learn").clear()
+        self.client.find_element_by_name("num_learn").send_keys("2")
+        self.client.find_element_by_id("btnRandomCardList").click()
+        time.sleep(0.1)
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 2)
+
+        # Check if cards during learn are the ones seen before
+        self.client.find_element_by_id("submit").click()
+        card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
+        card = card[0]
+        card = str(card)
+        self.assertEqual(card, cards_displayed[0])
+        self.client.find_element_by_id("ok-btn").click()
+        self.client.find_element_by_name("next").click()
+
+        # Check if back out and then still can resume learning
+        self.client.find_element_by_link_text("Alpine").click()
+        self.assertTrue(re.search("Hi, admin!", self.client.page_source))
+        self.client.find_element_by_link_text("Learn").click()
+        self.assertTrue(re.search("Objective", self.client.page_source))
+        time.sleep(0.1)
+        # Check return correct amount of cards
+        cards_displayed_resume = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.client.page_source,
+        )
+        self.assertEqual(len(cards_displayed_resume), 1)
+        self.client.find_element_by_id("submit").click()
+
+        card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
+        card = card[0]
+        card = str(card)
+        self.assertEqual(card, cards_displayed[1])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
