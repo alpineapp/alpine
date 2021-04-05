@@ -467,7 +467,7 @@ def learning():
         "learning.html",
         form=form,
         lsf=lsf,
-        size=len(lh.cards),
+        size=len(lh.ls_facts),
         cursor=lsf.number,
     )
 
