@@ -367,6 +367,12 @@ class SeleniumTestCase(FlaskClientTestCase):
         pass
 
 
+def find_progress_text(selenium_client):
+    progress_element = selenium_client.find_elements_by_id("progressBar")[0]
+    progress = progress_element.get_attribute("innerHTML").strip()
+    return progress
+
+
 class RandomSelectLearnCardTestCase(SeleniumTestCase):
     def test_random_selected_cards_to_learn(self):
         total_cards = Card.query.count()
@@ -404,6 +410,7 @@ class RandomSelectLearnCardTestCase(SeleniumTestCase):
 
         # Check if cards during learn are the ones seen before
         self.client.find_element_by_id("submit").click()
+        self.assertEqual(find_progress_text(self.client), "1 / 2")
         card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
         card = card[0]
         card = str(card)
@@ -411,6 +418,7 @@ class RandomSelectLearnCardTestCase(SeleniumTestCase):
         self.client.find_element_by_id("ok-btn").click()
         self.client.find_element_by_name("next").click()
 
+        self.assertEqual(find_progress_text(self.client), "2 / 2")
         card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
         card = card[0]
         card = str(card)
@@ -499,6 +507,7 @@ class ResumeLearningTestCase(SeleniumTestCase):
 
         # Check if cards during learn are the ones seen before
         self.client.find_element_by_id("submit").click()
+        self.assertEqual(find_progress_text(self.client), "1 / 2")
         card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
         card = card[0]
         card = str(card)
@@ -520,6 +529,7 @@ class ResumeLearningTestCase(SeleniumTestCase):
         self.assertEqual(len(cards_displayed_resume), 1)
         self.client.find_element_by_id("submit").click()
 
+        self.assertEqual(find_progress_text(self.client), "1 / 1")
         card = re.findall("""href=\"/card/(\d+)/edit_card\"""", self.client.page_source)
         card = card[0]
         card = str(card)
