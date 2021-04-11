@@ -49,4 +49,5 @@ alpine.log*
 data/
 .env
 .local_env
-**/uploads
+**/uploads/*
+!**/uploads/README.txt
