@@ -195,7 +195,10 @@ def export_cards():
     if current_user.get_task_in_progress("export_cards"):
         flash("An export task is currently in progress")
     else:
-        current_user.launch_task("export_cards", "Exporting cards...")
+        current_user.launch_task(
+            "export_cards",
+            f"Exporting your cards and send to {current_user.email}...",
+        )
         db.session.commit()
     return redirect(url_for("main.index"))
 

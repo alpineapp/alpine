@@ -65,21 +65,32 @@
 </nav>
 {% endblock %} {% block content %}
 <div class="container">
-  {% if current_user.is_authenticated %} {% with tasks =
-  current_user.get_tasks_in_progress() %} {% if tasks %} {% for task in tasks %}
-  <div class="alert alert-info" role="alert">
-    {{ task.description }}
-    <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
-  </div>
-  {% endfor %} {% endif %} {% endwith %} {% endif %} {% with messages =
-  get_flashed_messages() %} {% if messages %} {% for category, message in
-  get_flashed_messages(with_categories=True) %} {% if category != "message" %}
-  <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
-  {% else %}
-  <div class="alert alert-info" role="alert">{{ message }}</div>
-  {% endif %} {% endfor %} {% endif %} {% endwith %} {# application content
-  needs to be provided in the app_content block #} {% block app_content %}{%
-  endblock %}
+  {% if current_user.is_authenticated %}
+    {% with tasks = current_user.get_tasks_in_progress() %}
+      {% if tasks %}
+        {% for task in tasks %}
+          <div class="alert alert-info" role="alert">
+            {{ task.description }}
+            <span id="{{ task.id }}-progress">{{ task.get_progress() }}</span>%
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  {% endif %}
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for category, message in get_flashed_messages(with_categories=True) %}
+        {% if category != "message" %}
+          <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+          {% else %}
+          <div class="alert alert-info" role="alert">{{ message }}</div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  {# application content needs to be provided in the app_content block #}
+  {% block app_content %}
+  {%endblock %}
 </div>
 {% endblock %} {% block scripts %} {{ super() }} {{ moment.include_moment() }}
 

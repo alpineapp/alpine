@@ -13,9 +13,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
-FLASK_RUN_PORT = 53195
-
-
 class FlaskClientTestCase(unittest.TestCase):
     def setUp(self):
         self.app = create_app("testing")
@@ -338,10 +335,12 @@ class SeleniumTestCase(FlaskClientTestCase):
                 follow_redirects=True,
             )
             # start the Flask server in a thread
+            port = cls.app.config.get("FLASK_RUN_PORT")
+            assert port is not None, "The config FLASK_RUN_PORT is not set"
             cls.server_thread = threading.Thread(
                 target=cls.app.run,
                 kwargs={
-                    "port": FLASK_RUN_PORT,
+                    "port": port,
                     "debug": "false",
                     "use_reloader": False,
                     "use_debugger": False,
@@ -350,10 +349,16 @@ class SeleniumTestCase(FlaskClientTestCase):
             cls.server_thread.start()
 
     @classmethod
+    def get_main_url(cls):
+        port = cls.app.config.get("FLASK_RUN_PORT")
+        assert port is not None, "The config FLASK_RUN_PORT is not set"
+        return f"http://localhost:{port}"
+
+    @classmethod
     def tearDownClass(cls):
         if cls.webdriver:
             # stop the Flask server and the browser
-            cls.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/shutdown")
+            cls.webdriver.get(f"{cls.get_main_url()}/shutdown")
             cls.webdriver.quit()
             cls.server_thread.join()
 
@@ -374,7 +379,7 @@ class SeleniumTestCase(FlaskClientTestCase):
     def sign_in(self):
         # TODO: Make this step implicit for all test cases followed,
         # as most of the functions in this app require user signed in
-        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}")
+        self.webdriver.get(f"{self.get_main_url()}")
         self.webdriver.find_element_by_name("username").send_keys("admin")
         self.webdriver.find_element_by_name("password").send_keys("1")
         self.webdriver.find_element_by_name("submit").click()
@@ -394,7 +399,7 @@ class ShowLearnObjectiveTestCase(SeleniumTestCase):
 
         self.sign_in()
 
-        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
+        self.webdriver.get(f"{self.get_main_url()}/before_learning")
         self.assertTrue(re.search("Objective", self.webdriver.page_source))
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)
@@ -414,7 +419,7 @@ class RandomSelectedCardsLearnTestCase(SeleniumTestCase):
 
         self.sign_in()
 
-        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
+        self.webdriver.get(f"{self.get_main_url()}/before_learning")
         self.assertTrue(re.search("Objective", self.webdriver.page_source))
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)
@@ -465,7 +470,7 @@ class LearnByTagTestCase(SeleniumTestCase):
     def test_learn_by_tag(self):
         self.sign_in()
 
-        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/tag")
+        self.webdriver.get(f"{self.get_main_url()}/tag")
         self.assertTrue(re.search("Tag list", self.webdriver.page_source))
         self.webdriver.find_element_by_link_text("test").click()
         self.webdriver.find_element_by_id("btnLearn").click()
@@ -515,7 +520,7 @@ class ResumeLearningTestCase(SeleniumTestCase):
     def test_resume_learning(self):
         self.sign_in()
 
-        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
+        self.webdriver.get(f"{self.get_main_url()}/before_learning")
         self.assertTrue(re.search("Objective", self.webdriver.page_source))
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)

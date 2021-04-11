@@ -20,7 +20,6 @@ COPY alpine.py config.py boot.sh work.sh run.sh ./
 # Create persistent volume to be able to change permission
 # https://github.com/docker/compose/issues/3270#issuecomment-363478501
 RUN mkdir ./data
-RUN chown -R alpine:alpine ./
 RUN chmod +x boot.sh work.sh run.sh
 RUN chmod -R +x app/app_scripts/
 
