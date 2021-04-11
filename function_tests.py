@@ -396,7 +396,8 @@ class ShowLearnObjectiveTestCase(SeleniumTestCase):
     def test_show_learn_objective(self):
         for num in range(4, 21):
             quick_create_card(self.client, num=num)
-
+        # Wait to make sure all the cards are created
+        time.sleep(0.5)
         self.sign_in()
 
         self.webdriver.get(f"{self.get_main_url()}/before_learning")
