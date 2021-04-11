@@ -104,14 +104,27 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     password_hash = db.Column(db.String(128))
-    tags = db.relationship("Tag", backref="user", lazy="dynamic")
-    cards = db.relationship("Card", backref="user", lazy="dynamic")
+    tags = db.relationship(
+        "Tag", backref="user", lazy="dynamic", cascade="all, delete-orphan"
+    )
+    cards = db.relationship(
+        "Card", backref="user", lazy="dynamic", cascade="all, delete-orphan"
+    )
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
-    notifications = db.relationship("Notification", backref="user", lazy="dynamic")
-    tasks = db.relationship("Task", backref="user", lazy="dynamic")
+    notifications = db.relationship(
+        "Notification", backref="user", lazy="dynamic", cascade="all, delete-orphan"
+    )
+    tasks = db.relationship(
+        "Task", backref="user", lazy="dynamic", cascade="all, delete-orphan"
+    )
     token = db.Column(db.String(32), index=True, unique=True)
     token_expiration = db.Column(db.DateTime)
-    ls_facts = db.relationship("LearningSessionFact", backref="user", lazy="dynamic")
+    ls_facts = db.relationship(
+        "LearningSessionFact",
+        backref="user",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
     current_ls_id = db.Column(db.Integer)
 
     def __repr__(self):
@@ -325,7 +338,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "back": self.back,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            "next_date": self.learn_spaced_rep.next_date,
+            "next_date": self.learn_spaced_rep.next_date.isoformat() + "Z",
             "bucket": self.learn_spaced_rep.bucket,
             "_links": {"self": url_for("api.get_card", id=self.id)},
         }
