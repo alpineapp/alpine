@@ -13,6 +13,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 
+FLASK_RUN_PORT = 53195
+
+
 class FlaskClientTestCase(unittest.TestCase):
     def setUp(self):
         self.app = create_app("testing")
@@ -251,6 +254,21 @@ class LearnTest(FlaskClientTestCase):
         self.assertEqual(num_learn, 0)
 
 
+def quick_create_card(client, num: int):
+    client.post(
+        "/1/create_card",
+        data={
+            "front": f"card {num}",
+            "back": f"card {num} back",
+            "tags": "test",
+            "user_id": 1,
+            "next_date": "2021-02-14",
+            "bucket": 1,
+        },
+        follow_redirects=True,
+    )
+
+
 class SeleniumTestCase(FlaskClientTestCase):
     client = None
 
@@ -300,30 +318,8 @@ class SeleniumTestCase(FlaskClientTestCase):
                 data={"name": "test", "description": "test description"},
                 follow_redirects=True,
             )
-            cls.client.post(
-                "/1/create_card",
-                data={
-                    "front": "card 1",
-                    "back": "card 1 back",
-                    "tags": "test",
-                    "user_id": 1,
-                    "next_date": "2021-02-14",
-                    "bucket": 1,
-                },
-                follow_redirects=True,
-            )
-            cls.client.post(
-                "/1/create_card",
-                data={
-                    "front": "card 2",
-                    "back": "card 2 back",
-                    "tags": "test",
-                    "user_id": 1,
-                    "next_date": "2021-02-14",
-                    "bucket": 1,
-                },
-                follow_redirects=True,
-            )
+            quick_create_card(cls.client, num=1)
+            quick_create_card(cls.client, num=2)
             cls.client.post(
                 "/tag",
                 data={"name": "test 2", "description": "test 2 description"},
@@ -344,7 +340,12 @@ class SeleniumTestCase(FlaskClientTestCase):
             # start the Flask server in a thread
             cls.server_thread = threading.Thread(
                 target=cls.app.run,
-                kwargs={"debug": "false", "use_reloader": False, "use_debugger": False},
+                kwargs={
+                    "port": FLASK_RUN_PORT,
+                    "debug": "false",
+                    "use_reloader": False,
+                    "use_debugger": False,
+                },
             )
             cls.server_thread.start()
 
@@ -352,7 +353,7 @@ class SeleniumTestCase(FlaskClientTestCase):
     def tearDownClass(cls):
         if cls.webdriver:
             # stop the Flask server and the browser
-            cls.webdriver.get("http://localhost:5000/shutdown")
+            cls.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/shutdown")
             cls.webdriver.quit()
             cls.server_thread.join()
 
@@ -370,6 +371,15 @@ class SeleniumTestCase(FlaskClientTestCase):
     def tearDown(self):
         pass
 
+    def sign_in(self):
+        # TODO: Make this step implicit for all test cases followed,
+        # as most of the functions in this app require user signed in
+        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}")
+        self.webdriver.find_element_by_name("username").send_keys("admin")
+        self.webdriver.find_element_by_name("password").send_keys("1")
+        self.webdriver.find_element_by_name("submit").click()
+        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
+
 
 def find_progress_text(selenium_client):
     progress_element = selenium_client.find_elements_by_id("progressBar")[0]
@@ -377,18 +387,34 @@ def find_progress_text(selenium_client):
     return progress
 
 
-class RandomSelectLearnCardTestCase(SeleniumTestCase):
+class ShowLearnObjectiveTestCase(SeleniumTestCase):
+    def test_show_learn_objective(self):
+        for num in range(4, 21):
+            quick_create_card(self.client, num=num)
+
+        self.sign_in()
+
+        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
+        self.assertTrue(re.search("Objective", self.webdriver.page_source))
+        # Wait ajax
+        wait = WebDriverWait(self.webdriver, 10)
+        wait.until(EC.presence_of_element_located((By.ID, "cardContainer")))
+        # Check return correct amount of cards
+        cards_displayed = re.findall(
+            """id="cardContainer" card_id=\"(\d+)\"""",
+            self.webdriver.page_source,
+        )
+        self.assertEqual(len(cards_displayed), 20)
+
+
+class RandomSelectedCardsLearnTestCase(SeleniumTestCase):
     def test_random_selected_cards_to_learn(self):
         total_cards = Card.query.count()
         self.assertEqual(total_cards, 3)
-        # Sign in
-        self.webdriver.get("http://localhost:5000")
-        self.webdriver.find_element_by_name("username").send_keys("admin")
-        self.webdriver.find_element_by_name("password").send_keys("1")
-        self.webdriver.find_element_by_name("submit").click()
-        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
 
-        self.webdriver.get("http://localhost:5000/before_learning")
+        self.sign_in()
+
+        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
         self.assertTrue(re.search("Objective", self.webdriver.page_source))
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)
@@ -407,7 +433,7 @@ class RandomSelectLearnCardTestCase(SeleniumTestCase):
         # Wait ajax
         # When clicking Random button, there are already elements with id
         # cardContainer, so the Wait Until Presence of Element will not work.
-        time.sleep(0.1)
+        time.sleep(0.5)
         cards_displayed = re.findall(
             """id="cardContainer" card_id=\"(\d+)\"""",
             self.webdriver.page_source,
@@ -437,14 +463,9 @@ class RandomSelectLearnCardTestCase(SeleniumTestCase):
 
 class LearnByTagTestCase(SeleniumTestCase):
     def test_learn_by_tag(self):
-        # Sign in
-        self.webdriver.get("http://localhost:5000")
-        self.webdriver.find_element_by_name("username").send_keys("admin")
-        self.webdriver.find_element_by_name("password").send_keys("1")
-        self.webdriver.find_element_by_name("submit").click()
-        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
+        self.sign_in()
 
-        self.webdriver.get("http://localhost:5000/tag")
+        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/tag")
         self.assertTrue(re.search("Tag list", self.webdriver.page_source))
         self.webdriver.find_element_by_link_text("test").click()
         self.webdriver.find_element_by_id("btnLearn").click()
@@ -471,7 +492,7 @@ class LearnByTagTestCase(SeleniumTestCase):
         # Wait ajax
         # When clicking Random button, there are already elements with id
         # cardContainer, so the Wait Until Presence of Element will not work.
-        time.sleep(0.1)
+        time.sleep(0.5)
         cards_displayed = re.findall(
             """id="cardContainer" card_id=\"(\d+)\"""",
             self.webdriver.page_source,
@@ -492,14 +513,9 @@ class LearnByTagTestCase(SeleniumTestCase):
 
 class ResumeLearningTestCase(SeleniumTestCase):
     def test_resume_learning(self):
-        # Sign in
-        self.webdriver.get("http://localhost:5000")
-        self.webdriver.find_element_by_name("username").send_keys("admin")
-        self.webdriver.find_element_by_name("password").send_keys("1")
-        self.webdriver.find_element_by_name("submit").click()
-        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
+        self.sign_in()
 
-        self.webdriver.get("http://localhost:5000/before_learning")
+        self.webdriver.get(f"http://localhost:{FLASK_RUN_PORT}/before_learning")
         self.assertTrue(re.search("Objective", self.webdriver.page_source))
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)
@@ -518,7 +534,7 @@ class ResumeLearningTestCase(SeleniumTestCase):
         # Wait ajax
         # When clicking Random button, there are already elements with id
         # cardContainer, so the Wait Until Presence of Element will not work.
-        time.sleep(0.1)
+        time.sleep(0.5)
         cards_displayed = re.findall(
             """id="cardContainer" card_id=\"(\d+)\"""",
             self.webdriver.page_source,
@@ -545,72 +561,6 @@ class ResumeLearningTestCase(SeleniumTestCase):
         # Wait ajax
         wait = WebDriverWait(self.webdriver, 10)
         wait.until(EC.presence_of_element_located((By.ID, "cardContainer")))
-        # Check return correct amount of cards
-        cards_displayed_resume = re.findall(
-            """id="cardContainer" card_id=\"(\d+)\"""",
-            self.webdriver.page_source,
-        )
-        self.assertEqual(len(cards_displayed_resume), 1)
-        self.webdriver.find_element_by_id("submit").click()
-
-        self.assertEqual(find_progress_text(self.webdriver), "1 / 1")
-        card = re.findall(
-            """href=\"/card/(\d+)/edit_card\"""", self.webdriver.page_source
-        )
-        card = card[0]
-        card = str(card)
-        self.assertEqual(card, cards_displayed[1])
-
-
-class ResumeLearningTestCase(SeleniumTestCase):
-    def test_resume_learning(self):
-        # Sign in
-        self.webdriver.get("http://localhost:5000")
-        self.webdriver.find_element_by_name("username").send_keys("admin")
-        self.webdriver.find_element_by_name("password").send_keys("1")
-        self.webdriver.find_element_by_name("submit").click()
-        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
-
-        self.webdriver.get("http://localhost:5000/before_learning")
-        self.assertTrue(re.search("Objective", self.webdriver.page_source))
-        # Wait ajax
-        time.sleep(0.1)
-        # Check return correct amount of cards
-        cards_displayed = re.findall(
-            """id="cardContainer" card_id=\"(\d+)\"""",
-            self.webdriver.page_source,
-        )
-        self.assertEqual(len(cards_displayed), 3)
-
-        # Test feature Random number cards to learn
-        self.webdriver.find_element_by_name("num_learn").clear()
-        self.webdriver.find_element_by_name("num_learn").send_keys("2")
-        self.webdriver.find_element_by_id("btnRandomCardList").click()
-        time.sleep(0.1)
-        cards_displayed = re.findall(
-            """id="cardContainer" card_id=\"(\d+)\"""",
-            self.webdriver.page_source,
-        )
-        self.assertEqual(len(cards_displayed), 2)
-
-        # Check if cards during learn are the ones seen before
-        self.webdriver.find_element_by_id("submit").click()
-        self.assertEqual(find_progress_text(self.webdriver), "1 / 2")
-        card = re.findall(
-            """href=\"/card/(\d+)/edit_card\"""", self.webdriver.page_source
-        )
-        card = card[0]
-        card = str(card)
-        self.assertEqual(card, cards_displayed[0])
-        self.webdriver.find_element_by_id("ok-btn").click()
-        self.webdriver.find_element_by_name("next").click()
-
-        # Check if back out and then still can resume learning
-        self.webdriver.find_element_by_link_text("Alpine").click()
-        self.assertTrue(re.search("Hi, admin!", self.webdriver.page_source))
-        self.webdriver.find_element_by_link_text("Learn").click()
-        self.assertTrue(re.search("Objective", self.webdriver.page_source))
-        time.sleep(0.1)
         # Check return correct amount of cards
         cards_displayed_resume = re.findall(
             """id="cardContainer" card_id=\"(\d+)\"""",

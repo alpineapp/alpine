@@ -16,7 +16,7 @@ SESSION_EXPIRE_MINUTE = 5
 class LearningHelper:
     def __init__(
         self,
-        num_learn=5,
+        num_learn=None,
         learn_date=datetime.today(),
         tag_id=None,
         user=current_user,
@@ -196,7 +196,8 @@ class LearningHelper:
 
     def _build(self):
         random.shuffle(self.cards)
-        self.cards = self.cards[: self.num_learn]
+        if self.num_learn is not None:
+            self.cards = self.cards[: self.num_learn]
         self.lsb = LearningSessionBuilder(user=self.user, cards=self.cards)
         self.lsb.build()
         self.stats = self.lsb.stats
