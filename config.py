@@ -39,7 +39,17 @@ class Config(object):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = "sqlite://"
+    SQLALCHEMY_DATABASE_URI = (
+        "sqlite:///"
+        + os.path.join(basedir, "app.db")
+        # Because Selenium Test Case start the Flask server in a different thread
+        # So we need to disable the config check_same_thread when testing
+        # To avoid No such table `user` error when running the test
+        # https://stackoverflow.com/questions/21766960/operationalerror-no-such-table-in-flask-with-sqlalchemy
+        # https://stackoverflow.com/questions/34009296/using-sqlalchemy-session-from-flask-raises-sqlite-objects-created-in-a-thread-c
+        # https://stackoverflow.com/questions/50846856/in-flask-sqlalchemy-how-do-i-set-check-same-thread-false-in-config-py
+        + "?check_same_thread=False"
+    )
     WTF_CSRF_ENABLED = False
 
 
