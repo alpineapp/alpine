@@ -4,8 +4,13 @@ tinymce.init({
     plugins: [
         'advlist autolink lists link image charmap print preview anchor',
         'searchreplace visualblocks codesample fullscreen',
-        'insertdatetime media table paste help wordcount'
+        'insertdatetime media table paste help wordcount',
+        'autoresize'
     ],
+    width: '100%',
+    height: 400,
+    autoresize_min_height: 400,
+    autoresize_max_height: 800,
     toolbar: 'undo redo | image | formatselect | ' +
     'bold italic backcolor codesample superscript subscript | alignleft aligncenter ' +
     'alignright alignjustify | bullist numlist outdent indent | ' +
