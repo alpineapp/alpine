@@ -325,7 +325,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
             "back": self.back,
             "timestamp": self.timestamp.isoformat() + "Z",
             "user_id": self.user_id,
-            "next_date": self.learn_spaced_rep.next_date,
+            "next_date": self.learn_spaced_rep.next_date.isoformat() + "Z",
             "bucket": self.learn_spaced_rep.bucket,
             "_links": {"self": url_for("api.get_card", id=self.id)},
         }

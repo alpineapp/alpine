@@ -34,7 +34,14 @@ class Config(object):
     UPLOAD_PATH = "static/uploads"
     # Persistent volume
     DISK_PATH = os.environ.get("DISK_PATH")
-    SERVER_NAME = os.environ.get("SERVER_NAME")
+    # Set the port
+    FLASK_RUN_PORT = 5000
+    # Set server name
+    ENV = os.environ.get("ENV")
+    if ENV and ENV == "prod":
+        SERVER_NAME = "do.alpineapp.xyz"
+    else:
+        SERVER_NAME = f"localhost:{FLASK_RUN_PORT}"
 
 
 class TestingConfig(Config):
@@ -51,6 +58,14 @@ class TestingConfig(Config):
         + "?check_same_thread=False"
     )
     WTF_CSRF_ENABLED = False
+    # Set the port
+    FLASK_RUN_PORT = 53195
+    # Set server name
+    ENV = os.environ.get("ENV")
+    if ENV and ENV == "prod":
+        SERVER_NAME = "do.alpineapp.xyz"
+    else:
+        SERVER_NAME = f"localhost:{FLASK_RUN_PORT}"
 
 
 config = {"testing": TestingConfig, "default": Config}
