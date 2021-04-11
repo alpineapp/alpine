@@ -17,6 +17,7 @@ RUN alpine/bin/pip install gunicorn psycopg2
 COPY app app
 COPY migrations migrations
 COPY alpine.py config.py boot.sh work.sh run.sh ./
+# VOLUME /vol/web
 # Create persistent volume to be able to change permission
 # https://github.com/docker/compose/issues/3270#issuecomment-363478501
 RUN mkdir ./data

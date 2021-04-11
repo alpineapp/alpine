@@ -50,3 +50,5 @@ data/
 .env
 .local_env
 **/uploads
+.tfvars
+terraform.tfvars
