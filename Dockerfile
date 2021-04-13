@@ -22,6 +22,7 @@ COPY alpine.py config.py boot.sh work.sh run.sh ./
 RUN mkdir ./data
 RUN chmod +x boot.sh work.sh run.sh
 RUN chmod -R +x app/app_scripts/
+RUN chown -R alpine:alpine app/static/uploads/
 
 ENV FLASK_APP alpine.py
 
