@@ -89,13 +89,13 @@ def index():
             learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
-        db.session.flush()
+        db.session.commit()
         for tag_name in tag_names:
             tag = current_user.tags.filter_by(name=tag_name).first()
             if not tag:
                 tag = Tag(name=tag_name, user_id=current_user.id)
                 db.session.add(tag)
-                db.session.flush()
+                db.session.commit()
             current_app.logger.info(tag)
             tagging = Tagging(tag_id=tag.id, card_id=card.id)
             db.session.add(tagging)
@@ -147,6 +147,19 @@ def search():
     cards, total = Card.search(
         g.search_form.q.data, page, current_app.config["CARDS_PER_PAGE"]
     )
+    cards = cards.all()
+
+    # Add search by tags
+    tags, _ = Tag.search(
+        g.search_form.q.data, page, current_app.config["CARDS_PER_PAGE"]
+    )
+    for tag in tags:
+        taggings = tag.get_cards()
+        for tagging in taggings:
+            cards.append(Card.query.filter_by(id=tagging.card_id).first())
+            total = total + 1
+
+    # Pagination
     next_url = (
         url_for("main.search", q=g.search_form.q.data, page=page + 1)
         if total > page * current_app.config["CARDS_PER_PAGE"]
