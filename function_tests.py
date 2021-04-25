@@ -725,6 +725,37 @@ class LearnTwiceTestCase(SeleniumTestCase):
         self.assertNotIn(card_success, cards_displayed_next_time)
 
 
+class StatsTestCase(SeleniumTestCase):
+    def test_stats(self):
+        total_cards = Card.query.count()
+        self.assertEqual(total_cards, 3)
+
+        self.sign_in()
+
+        self.webdriver.get(f"{self.get_main_url()}/before_learning")
+        self.assertTrue(re.search("Objective", self.webdriver.page_source))
+        # Wait ajax
+        wait = WebDriverWait(self.webdriver, 10)
+        wait.until(EC.presence_of_element_located((By.ID, "cardContainer")))
+
+        # Check if cards during learn are the ones seen before
+        self.webdriver.find_element_by_id("submit").click()
+        self.webdriver.find_element_by_id("ok-btn").click()
+        self.webdriver.find_element_by_name("next").click()
+        self.webdriver.get(f"{self.get_main_url()}/stats")
+        list_stats = re.findall(
+            """<span class="card-title h2">(\d+)</span>""", self.webdriver.page_source
+        )
+        # 5 stats Test
+        self.assertEqual(list_stats, ["3", "1", "0", "2", "1"])
+        # Streak Test
+        self.assertTrue(
+            re.search(
+                """<span class="h1 text-primary">1</span>""", self.webdriver.page_source
+            )
+        )
+
+
 if __name__ == "__main__":
     unittest.main(
         verbosity=2,
