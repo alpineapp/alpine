@@ -95,6 +95,8 @@
 {% endblock %} {% block scripts %} {{ super() }} {{ moment.include_moment() }}
 
 <script>
+  $.fn.selectpicker.Constructor.BootstrapVersion = '4';
+
   $(document).ready(function () {
     $(".truncate-overflow").each(function (index, element) {
         // Truncate to only 2 lines
@@ -127,7 +129,7 @@
     getUserTags();
 
     function markSelectedTag() {
-      // Mark selected tag if add card from a specific tag
+      // Mark the current tag as default if user clicks add card from the Tag profile page
       if ($("#selectedTag").length) {
         for (i = 0; i < userTags.length; i++) {
           var tagOption = userTags[i];
@@ -176,25 +178,37 @@
       newOption = null;
     }
 
-    $(document).on('keyup', '#tag-div .bs-searchbox input', function(e) {
-      // Update newOption value on typing, but wait for user stop typing for sometime
-      // then trigger
-      var tagInput = $("#tag-div .bs-searchbox input").val();
-      clearTimeout(typingTimer);
-      if (tagInput) {
-          typingTimer = setTimeout(addNewOptionTyping, addNewOptionTypingInterval);
-      }
-    });
+    if (window.location.href.indexOf('/index') != -1) {
+      $(document).on('keyup', '#tag-div .bs-searchbox input', function(e) {
+        // Update newOption value on typing, but wait for user stop typing for sometime
+        // then trigger
+        var tagInput = $("#tag-div .bs-searchbox input").val();
+        clearTimeout(typingTimer);
+        if (tagInput) {
+            typingTimer = setTimeout(addNewOptionTyping, addNewOptionTypingInterval);
+        }
+      });
 
-    $(document).on('focus', '#tag-div .bs-searchbox input', function(e) {
-      // When enter input do load new tag options followed by database tags
-      handleNewOption();
-      sel = document.getElementById('tags');
-      $.each(userTags, function(i, option) {
-        sel.add(option);
+      $(document).on('focus', '#tag-div .bs-searchbox input', function(e) {
+        // When enter input do load new tag options followed by database tags
+        handleNewOption();
+        sel = document.getElementById('tags');
+        $.each(userTags, function(i, option) {
+          sel.add(option);
+        })
+        $('#tags').selectpicker('refresh');
       })
-      $('#tags').selectpicker('refresh');
-    })
+    }
+
+    if (window.location.href.indexOf('/before_learning') != -1) {
+      $(document).on('focus', '#tag-div .bs-searchbox input', function(e) {
+        sel = document.getElementById('tags');
+        $.each(userTags, function(i, option) {
+          sel.add(option);
+        })
+        $('#tags').selectpicker('refresh');
+      })
+    }
   });
 
   $('.tinymce-display').each(function () {
