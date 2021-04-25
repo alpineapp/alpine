@@ -39,7 +39,7 @@ class FlaskClientTestCase(unittest.TestCase):
         )
         tag = Tag(name="test", description="test", user_id=user.id)
         db.session.add(tag)
-        db.session.flush()
+        db.session.commit()
         learn_spaced_rep = LearnSpacedRepetition(
             next_date=datetime.today(),
             bucket=1,
@@ -47,13 +47,13 @@ class FlaskClientTestCase(unittest.TestCase):
         db.session.add(learn_spaced_rep)
         db.session.flush()
         card = Card(
-            front="front test",
-            back="back test",
+            front="front",
+            back="back",
             learn_spaced_rep_id=learn_spaced_rep.id,
             user_id=user.id,
         )
         db.session.add(card)
-        db.session.flush()
+        db.session.commit()
         tagging = Tagging(tag_id=tag.id, card_id=card.id)
         db.session.add(tagging)
         db.session.commit()
@@ -189,7 +189,7 @@ class LearnTest(FlaskClientTestCase):
             data={"mode": "start", "cardsSelected": ",1"},
             follow_redirects=True,
         )
-        self.assertTrue(re.search("front test", response.get_data(as_text=True)))
+        self.assertTrue(re.search("front", response.get_data(as_text=True)))
 
     def test_next_card_learning_after_ok(self):
         # DEV-53 For some reason if we include self.client.get('/before_learning')
@@ -249,6 +249,20 @@ class LearnTest(FlaskClientTestCase):
         if num_learn:
             num_learn = int(num_learn.group(1))
         self.assertEqual(num_learn, 0)
+
+
+class SearchTest(FlaskClientTestCase):
+    def test_search_title(self):
+        response = self.client.get(
+            "search?q=front+test"
+        )
+        self.assertTrue(re.search("front", response.get_data(as_text=True)))
+    
+    def test_search_tag(self):
+        response = self.client.get(
+            "search?q=test"
+        )
+        self.assertTrue(re.search("test", response.get_data(as_text=True)))
 
 
 def quick_create_card(client, num: int):
