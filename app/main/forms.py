@@ -46,6 +46,7 @@ class EmptyForm(FlaskForm):
 
 class BeforeLearningForm(FlaskForm):
     num_learn = IntegerField("Not mastered cards", default=5)
+    tags = TagListField("Tags")
     submit = SubmitField("Start")
 
 

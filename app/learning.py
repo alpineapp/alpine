@@ -18,7 +18,7 @@ class LearningHelper:
         self,
         num_learn=None,
         learn_date=datetime.today(),
-        tag_id=None,
+        tag_id=[],
         user=current_user,
     ):
         self.user = user
@@ -134,8 +134,8 @@ class LearningHelper:
         return cards.all()
 
     def _get_card_pool(self):
-        if self.tag_id:
-            taggings = Tagging.query.filter_by(tag_id=self.tag_id).all()
+        if self.tag_id is not None and len(self.tag_id) > 0:
+            taggings = Tagging.query.filter(Tagging.tag_id.in_(self.tag_id)).all()
             card_pool = (tagging.card_id for tagging in taggings)
             card_pool = Card.query.filter(Card.id.in_(card_pool))
             return card_pool

@@ -89,13 +89,13 @@ def index():
             learn_spaced_rep_id=learn_spaced_rep.id,
         )
         db.session.add(card)
-        db.session.flush()
+        db.session.commit()
         for tag_name in tag_names:
             tag = current_user.tags.filter_by(name=tag_name).first()
             if not tag:
                 tag = Tag(name=tag_name, user_id=current_user.id)
                 db.session.add(tag)
-                db.session.flush()
+                db.session.commit()
             current_app.logger.info(tag)
             tagging = Tagging(tag_id=tag.id, card_id=card.id)
             db.session.add(tagging)
@@ -147,6 +147,19 @@ def search():
     cards, total = Card.search(
         g.search_form.q.data, page, current_app.config["CARDS_PER_PAGE"]
     )
+    cards = cards.all()
+
+    # Add search by tags
+    tags, _ = Tag.search(
+        g.search_form.q.data, page, current_app.config["CARDS_PER_PAGE"]
+    )
+    for tag in tags:
+        taggings = tag.get_cards()
+        for tagging in taggings:
+            cards.append(Card.query.filter_by(id=tagging.card_id).first())
+            total = total + 1
+
+    # Pagination
     next_url = (
         url_for("main.search", q=g.search_form.q.data, page=page + 1)
         if total > page * current_app.config["CARDS_PER_PAGE"]
@@ -394,13 +407,18 @@ def delete_tag(tag_id):
 @login_required
 def get_cards():
     num_learn = request.args.get("num_learn", type=int)
-    tag_id = request.args.get("tag_id", type=int)
+    tag_names = request.args.get("tag_names", type=str)
     current_app.logger.info(
-        f"uid {current_user.id}: num_learn: {num_learn}, tag_id: {tag_id}"
+        f"uid {current_user.id}: num_learn: {num_learn}, tag_names: {tag_names}"
     )
+    if tag_names is not None:
+        tag_names = tag_names.split(",")
+        tag_ids = current_user.get_tag_ids_from_names(tag_names)
+    else:
+        tag_ids = None
     lh = LearningHelper(
         num_learn=num_learn,
-        tag_id=tag_id,
+        tag_id=tag_ids,
         user=current_user,
     )
     lh.init_session(write_new_session=False)
@@ -442,7 +460,9 @@ def before_learning():
         return redirect(url_for("main.learning"))
     else:
         tag_id = request.args.get("tag_id", type=int)
-        tag = Tag.query.get(tag_id)
+        if tag_id:
+            tag = Tag.query.get(tag_id)
+            tag_id = [tag_id]
         lh = LearningHelper(user=current_user, tag_id=tag_id)
         lh.init_session(write_new_session=False)
         start_form.num_learn.data = len(lh.cards)
