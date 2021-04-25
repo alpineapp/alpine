@@ -53,6 +53,17 @@
     </div>
   </div>
 </div>
+<div class="row form-row">
+  <div class='form-group col-md-3' id='tag-div'>
+  <label>{{ start_form.tags.label.text }}</label>
+  <select id="tags" name="tags" required class="selectpicker form-control"
+          data-live-search="true" multiple mobile="true">
+  {% if tag is defined and tag is not none %}
+    <option id="selectedTag" value='{{ tag.name }}' selected>{{ tag.name }}</option>
+  {% endif %}
+  </select>
+  </div>
+</div>
 
 <form action="" method="post">
   {{ start_form.hidden_tag() }}
@@ -79,17 +90,16 @@
 {% block scripts %} {{ super() }}
 <script>
   $(".cardBack").hide();
-  console.log($("#inputTagId").val());
 
   function getCards() {
     /* Call to back-end to get a random list of cards based on user input num learn
     */
     let numLearn = $("#inputNumLearn").val();
     let url = `{{ url_for('main.get_cards') }}?num_learn=${numLearn}`
-    let tagId = $("#inputTagId").val();
-    console.log(`tagId: ${tagId}`);
-    if ( tagId ) {
-      url += `&tag_id=${tagId}`
+    let tagNames = $("select").val();
+    console.log(`tagNames: ${tagNames}`);
+    if ( tagNames ) {
+      url += `&tag_names=${tagNames}`
     }
     $.ajax({
       url: url,

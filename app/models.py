@@ -227,6 +227,11 @@ class User(UserMixin, db.Model):
     def get_latest_card(self):
         return self.cards.order_by(Card.timestamp.desc()).first()
 
+    def get_tag_ids_from_names(self, tag_names: list):
+        tags = self.tags.filter(Tag.name.in_(tag_names)).all()
+        tag_ids = [tag.id for tag in tags]
+        return tag_ids
+
 
 class Tagging(db.Model):
     tag_id = db.Column(db.Integer, db.ForeignKey("tag.id"), primary_key=True)
