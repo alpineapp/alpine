@@ -40,14 +40,14 @@ def downgrade():
         batch_op.add_column(sa.Column("deck_id", sa.INTEGER(), nullable=True))
         batch_op.create_foreign_key("fk_card_deck_id_deck", "deck", ["deck_id"], ["id"])
 
-    op.create_table(
-        "deck",
-        sa.Column("id", sa.INTEGER(), nullable=False),
-        sa.Column("name", sa.VARCHAR(length=256), nullable=True),
-        sa.Column("timestamp", sa.DATETIME(), nullable=True),
-        sa.Column("user_id", sa.INTEGER(), nullable=True),
-        sa.Column("description", sa.VARCHAR(length=1024), nullable=True),
-        sa.ForeignKeyConstraint(["user_id"], ["user.id"], name="fk_deck_user_id_user"),
-        sa.PrimaryKeyConstraint("id", name="pk_deck"),
-    )
+    # op.create_table(
+    #     "deck",
+    #     sa.Column("id", sa.INTEGER(), nullable=False),
+    #     sa.Column("name", sa.VARCHAR(length=256), nullable=True),
+    #     sa.Column("timestamp", sa.DATETIME(), nullable=True),
+    #     sa.Column("user_id", sa.INTEGER(), nullable=True),
+    #     sa.Column("description", sa.VARCHAR(length=1024), nullable=True),
+    #     sa.ForeignKeyConstraint(["user_id"], ["user.id"], name="fk_deck_user_id_user"),
+    #     sa.PrimaryKeyConstraint("id", name="pk_deck"),
+    # )
     # ### end Alembic commands ###
