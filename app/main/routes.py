@@ -623,3 +623,43 @@ def server_shutdown():
         abort(500)
     shutdown()
     return "Shutting down..."
+
+
+@bp.route("/market", methods=["GET"])
+@login_required
+def market():
+    page = request.args.get("page", 1, type=int)
+    market_tags = Tag.query.filter_by(is_on_market=True).order_by(Tag.timestamp.desc()).paginate(page)
+    next_url = url_for("main.market", page=market_tags.next_num) if market_tags.has_next else None
+    prev_url = url_for("main.market", page=market_tags.prev_num) if market_tags.has_prev else None
+    return render_template(
+        "market.html",
+        market_tags=market_tags.items,
+        next_url=next_url,
+        prev_url=prev_url
+    )
+
+
+@bp.route("/claim", methods=["GET", "POST"])
+@login_required
+def claim_collection(tag_id):
+    tag = Tag.query.get_or_404(tag_id)
+    cards = tag.get_cards()
+    learn_spaced_rep = LearnSpacedRepetition(
+                        next_date=datetime.today(),
+                        bucket=1)
+    db.session.add(learn_spaced_rep)
+    db.session.flush()
+    for card in cards:
+        front_ = card.front
+        back_ = card.back
+        card_clone = Card(front=front_, back=back_, user=current_user.id, learn_spaced_rep_id=learn_spaced_rep.id)
+        db.session.add(card_clone)
+        db.session.commit()
+        tagging = Tagging(tag_id=tag.id, card_id=card_clone.id)
+        db.session.add(tagging)
+        db.session.commit()
+    flash(f"Claimed {tag.name}")
+
+
+    

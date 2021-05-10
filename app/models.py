@@ -126,6 +126,7 @@ class User(UserMixin, db.Model):
         cascade="all, delete-orphan",
     )
     current_ls_id = db.Column(db.Integer)
+    is_creator = db.Column(db.Boolean)
 
     def __repr__(self):
         return "<User {}>".format(self.username)
@@ -231,6 +232,9 @@ class User(UserMixin, db.Model):
         tags = self.tags.filter(Tag.name.in_(tag_names)).all()
         tag_ids = [tag.id for tag in tags]
         return tag_ids
+    
+    def set_is_creator(self, is_creator: bool):
+        self.is_creator = is_creator
 
 
 class Tagging(db.Model):
@@ -249,6 +253,7 @@ class Tag(PaginatedAPIMixin, SearchableMixin, db.Model):
     cards = db.relationship(
         "Tagging", backref="tag", lazy="dynamic", cascade="all, delete-orphan"
     )
+    is_on_market = db.Column(db.Boolean)
 
     def __repr__(self):
         return "<Tag {}>".format(self.name)
@@ -260,7 +265,15 @@ class Tag(PaginatedAPIMixin, SearchableMixin, db.Model):
             return ""
 
     def get_cards(self):
-        return self.cards.filter_by(tag_id=Tag.id).all()
+        taggings = self.cards.filter_by(tag_id=Tag.id).all()
+        cards = []
+        for tagging in taggings:
+            card = Card.query.get_or_404(tagging.card_id)
+            cards.append(card)
+        return cards
+    
+    def get_author(self):
+        return User.query.get_or_404(self.user_id).username
 
     def to_dict(self):
         data = {
@@ -279,6 +292,9 @@ class Tag(PaginatedAPIMixin, SearchableMixin, db.Model):
             if field in data:
                 setattr(self, field, data[field])
         setattr(self, "timestamp", datetime.utcnow())
+    
+    def set_is_on_market(self, is_on_market: bool):
+        self.is_on_market = is_on_market
 
 
 class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
@@ -466,3 +482,10 @@ class LearnSpacedRepetition(db.Model):
             return 1
         elif bucket <= 5:
             return 2
+
+
+class Claim(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), primary_key=True)
+    tag_id = db.Column(db.Integer, db.ForeignKey("tag.id"), primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
