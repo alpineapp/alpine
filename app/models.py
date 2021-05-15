@@ -287,7 +287,7 @@ class Card(PaginatedAPIMixin, SearchableMixin, db.Model):
     MAX_CHAR_FRONT = 60
     id = db.Column(db.Integer, primary_key=True)
     front = db.Column(db.String(500))
-    back = db.Column(db.String(1000))
+    back = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"))
     tags = db.relationship(
