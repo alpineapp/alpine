@@ -9,12 +9,20 @@ app = create_app()
 app.config.from_object(config["default"])
 
 with app.app_context():
-    user = User.query.filter_by(username="admin").first()
+    user = User.query.filter_by(username="TheArchitect").first()
+    if not user:
+        user = User(username="TheArchitect", email="binhintheflow@gmail.com")
+        user.set_password("boringman")
+        db.session.add(user)
+        db.session.commit()
+        user = User.query.filter_by(username="TheArchitect").first()
+    user.set_is_creator(True)
     with open('app/static/collections/data_science_interviews.json') as f:
         data = json.load(f)
     tag = Tag(
         name="Data Science Interviews",
-        user_id=user.id
+        user_id=user.id,
+        description="117 Data Science Interviews, cover all basic knowledge for Data Scientists"
     )
     tag.set_is_on_market(True)
     learn_spaced_rep = LearnSpacedRepetition(

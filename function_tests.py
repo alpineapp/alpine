@@ -4,6 +4,7 @@ from datetime import datetime
 import unittest
 import threading
 import time
+from flask_login import current_user
 
 from app import create_app, db
 from app.models import User, Tag, Tagging, Card, LearnSpacedRepetition
@@ -59,8 +60,10 @@ class FlaskClientTestCase(unittest.TestCase):
         db.session.commit()
 
     def tearDown(self):
+        for model in [Tagging, Card, Tag, User, LearnSpacedRepetition]:
+            db.session.query(model).delete()
+        db.session.commit()
         db.session.remove()
-        db.drop_all()
         self.app_context.pop()
 
 
@@ -259,6 +262,14 @@ class SearchTest(FlaskClientTestCase):
     def test_search_tag(self):
         response = self.client.get("search?q=test")
         self.assertTrue(re.search("test", response.get_data(as_text=True)))
+
+
+class MarketTest(FlaskClientTestCase):
+    def test_claim(self):
+        user = User.query.filter_by(username="admin").first()
+        tag = Tag.query.filter_by(is_on_market=True).first()
+        self.client.post(f"market/{tag.id}/claim")
+        self.assertTrue(Tag.query.filter_by(user_id=user.id).filter_by(id=tag.id))     
 
 
 def quick_create_card(client, num: int):

@@ -220,6 +220,7 @@ def export_cards():
 @login_required
 def create_card(tag_id):
     form = CardForm()
+    import pdb; pdb.set_trace
     tag = Tag.query.get_or_404(tag_id)
     if form.validate_on_submit():
         if form.tags.data[0] != tag.name:
@@ -640,26 +641,31 @@ def market():
     )
 
 
-@bp.route("/claim", methods=["GET", "POST"])
+@bp.route("/market/<tag_id>/claim", methods=["GET", "POST"])
 @login_required
 def claim_collection(tag_id):
-    tag = Tag.query.get_or_404(tag_id)
+    tag = Tag.query.filter_by(id=tag_id).first()
     cards = tag.get_cards()
     learn_spaced_rep = LearnSpacedRepetition(
                         next_date=datetime.today(),
                         bucket=1)
     db.session.add(learn_spaced_rep)
     db.session.flush()
+    tag_clone = Tag(name=tag.name, user_id=current_user.id, description=tag.description)
+    db.session.add(tag_clone)
+    db.session.commit()
     for card in cards:
         front_ = card.front
         back_ = card.back
-        card_clone = Card(front=front_, back=back_, user=current_user.id, learn_spaced_rep_id=learn_spaced_rep.id)
+        card_clone = Card(front=front_, back=back_, user_id=current_user.id, learn_spaced_rep_id=learn_spaced_rep.id)
         db.session.add(card_clone)
         db.session.commit()
-        tagging = Tagging(tag_id=tag.id, card_id=card_clone.id)
+        tagging = Tagging(tag_id=tag_clone.id, card_id=card_clone.id)
         db.session.add(tagging)
         db.session.commit()
-    flash(f"Claimed {tag.name}")
+    flash(f"Claimed {tag_clone.name}")
+    response = {"meta": {"status": "OK"}, "data": {"cards": len(cards)}}
+    return response
 
 
     

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="bd-example">
+    <h3>Collections</h3>
+    {% for tag in market_tags %}
+    <li class="list-group-item">{{ tag.name }}
+        <a href="{{ url_for('main.claim_collection', tag_id=tag.id) }}" role="button" class="btn btn-sm btn-primary">Claim</a>
+    </li>
+    {% endfor %}
+</div>
+
+{% include '_pagination.html' %}
+{% endblock %}
