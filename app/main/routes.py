@@ -391,11 +391,10 @@ def edit_tag(tag_id):
 @login_required
 def delete_tag(tag_id):
     tag = Tag.query.get_or_404(tag_id)
-    for tagging in tag.cards:
-        card_id = tagging.card_id
-        card = Card.query.get_or_404(card_id)
+    for card in tag.get_cards():
         if "<img src=" in card.back and current_app.config["UPLOAD_PATH"] in card.back:
             Card.delete_card_img(card.back)
+        db.session.delete(card)
     db.session.delete(tag)
     db.session.commit()
     if current_user.tags.count() > 0:
@@ -631,11 +630,14 @@ def server_shutdown():
 def market():
     page = request.args.get("page", 1, type=int)
     market_tags = Tag.query.filter_by(is_on_market=True).order_by(Tag.timestamp.desc()).paginate(page)
+    user_tags = Tag.query.filter_by(user_id=current_user.id).all()
+    user_tag_names = [i.name for i in user_tags]
     next_url = url_for("main.market", page=market_tags.next_num) if market_tags.has_next else None
     prev_url = url_for("main.market", page=market_tags.prev_num) if market_tags.has_prev else None
     return render_template(
         "market.html",
         market_tags=market_tags.items,
+        user_tag_names=user_tag_names,
         next_url=next_url,
         prev_url=prev_url
     )
@@ -665,7 +667,7 @@ def claim_collection(tag_id):
         db.session.commit()
     flash(f"Claimed {tag_clone.name}")
     response = {"meta": {"status": "OK"}, "data": {"cards": len(cards)}}
-    return response
+    return redirect(url_for("main.tag_profile", tag_id=tag_clone.id))
 
 
     

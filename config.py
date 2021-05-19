@@ -41,7 +41,8 @@ class Config(object):
     if ENV and ENV == "prod":
         SERVER_NAME = "do.alpineapp.xyz"
     else:
-        SERVER_NAME = f"localhost:{FLASK_RUN_PORT}"
+        # SERVER_NAME = f"localhost:{FLASK_RUN_PORT}"
+        pass
 
 
 class TestingConfig(Config):
