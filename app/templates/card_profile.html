@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block app_content %}
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <div class="container">
     <div class="page-header">
         <h1>{{ card.front }}</h1>
@@ -15,7 +17,7 @@
 	<hr class="solid">
 	<div class="bd-example">
 		<h3>Description</h3>
-		<p class="card-text tinymce-display small" style="height: 100%">
+		<p class="cardBack card-text tinymce-display small" style="height: 100%">
 			{{ card.back }}
 		</p>
 	</div>

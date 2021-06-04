@@ -25,16 +25,16 @@ with app.app_context():
         description="117 Data Science Interviews, cover all basic knowledge for Data Scientists"
     )
     tag.set_is_on_market(True)
-    learn_spaced_rep = LearnSpacedRepetition(
-                        next_date=datetime.today(),
-                        bucket=1)
-    db.session.add(learn_spaced_rep)
     db.session.flush()
     db.session.add(tag)
     db.session.commit()
     for i in data:
         front_ = i['front']
         back_ = i['back']
+        learn_spaced_rep = LearnSpacedRepetition(
+                        next_date=datetime.today(),
+                        bucket=1)
+        db.session.add(learn_spaced_rep)
         card = Card(front=front_, back=back_, user_id=user.id, learn_spaced_rep_id=learn_spaced_rep.id)
         db.session.add(card)
         db.session.commit()
